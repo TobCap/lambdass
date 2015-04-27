@@ -1,0 +1,10 @@
+Package: lambdass
+Type: Package
+Title: lambda syntax-sugar
+Version: 0.0.1
+Date: 2015-04-18
+Authors@R: person("tob", "", email = "tobakucapitalism@gmail.com",
+  role = c("aut", "cre"))
+Description: Syntax-sugar for lambda. It is very simple and you can save typing.
+License: MIT + file LICENSE
+Suggests: testthat
