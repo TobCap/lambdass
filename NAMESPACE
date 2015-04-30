@@ -5,3 +5,6 @@ export("~")
 export(as.formals)
 export(f.)
 export(is.formals)
+
+useDynLib(lambdass, C_add_ = add_)
+useDynLib(lambdass, convolve2)

@@ -5,8 +5,6 @@
 \alias{~}
 \title{Syntax sugar of making an anonymous function}
 \usage{
-\code{~~ ..}
-
 "~"(..., env_ = parent.frame())
 }
 \arguments{

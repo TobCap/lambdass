@@ -23,7 +23,7 @@ arrow function can check arguments class.
 x \%->\% {x + 1}
 {x; y} \%->\% {x + y}
 {x = 1L; y = 2L} \%->\% {x + y}
-{x:numeric; y:numeric} \%->\% {x + y}
+
 {x:character; e:environment} \%->\% {get(x, envir = e, inherits = FALSE)}
 # see more examples in https://gist.github.com/TobCap/6826123
 }
