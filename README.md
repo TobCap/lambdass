@@ -22,8 +22,8 @@ library("lambdass")
 ## Usage
 ``` r
 # can be written in three ways.
-~~ .. + 1
 f.(x, x + 1)
+~~ .. + 1
 x %->% {x + 1}
 # all means add one
 function(x) x + 1
@@ -49,7 +49,7 @@ identical(f.(x, y, x + y), f.r(x, y, x + y))
 ## about ten times speed-up
 microbenchmark::microbenchmark(
   f.(x, y, x + y), 
-  f.r(x, y, x + y),
+  f.r(x, y, x + y)
 )
 # Unit: microseconds
 #              expr    min      lq     mean median     uq     max neval
@@ -59,7 +59,7 @@ microbenchmark::microbenchmark(
 
 ### double-tilda
 ``` r
-# double-tilda with dotted placeholder
+# double-tilda with dotted placeholder like the usage of underscore in scala's lambda
 # A bounded vairable can be specified by tow-dots placeholder.
 # Two or more variables can be designated by ..1, ..2, and so on.
 ~~ .. + 1
@@ -99,11 +99,18 @@ f(x:character, y = "") %->% {paste0(x, y)}
 ## Benchmarking
 ``` r
 ## note that it's nanoseconds
-> microbenchmark::microbenchmark(f.(x, x), x %->% {x}, ~~ .., function(x) x)
+> microbenchmark::microbenchmark(
+  f. = f.(x, x), 
+  "%->%" = x %->% {x}, 
+  "~~" = ~~ ..,
+  "as.function" = as.function(alist(x=, x)),
+  "function(x) x" = function(x) x
+  )
 Unit: nanoseconds
-             expr    min       lq      mean median       uq    max neval
-         f.(x, x)   5796   6910.5  10200.45  10253  10922.5  57953   100
- x %->% {     x }  96291  99858.0 112669.64 103870 107882.0 459610   100
-             ~~.. 260342 264130.5 286964.33 268366 280402.0 541189   100
-    function(x) x      0    447.0    856.67    892    893.0   4459   100
+          expr    min       lq      mean   median       uq    max neval
+            f.   7579   9139.5  10940.42  11146.0  12037.0  22736   100
+          %->% 128388 133515.0 145715.94 136189.5 139978.0 388729   100
+            ~~ 283522 290655.0 302094.39 293776.0 299125.0 456043   100
+   as.function  41905  44356.5  55965.23  54610.5  59067.5 267474   100
+ function(x) x      0    447.0    754.24    892.0    893.0   2230   100
 ```
