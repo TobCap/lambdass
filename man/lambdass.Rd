@@ -3,6 +3,7 @@
 \name{lambdass}
 \alias{as.formals}
 \alias{f.}
+\alias{f.r}
 \alias{is.formals}
 \alias{lambdass}
 \title{Syntax sugar of making an anonymous function}
@@ -11,7 +12,9 @@ as.formals(x, value = list(quote(expr = )))
 
 is.formals(y)
 
-f.(..., env_ = parent.frame())
+f.r(..., env_ = parent.frame())
+
+f.(...)
 }
 \arguments{
 \item{x}{x is coerced to character (internally STRSXP).}

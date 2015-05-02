@@ -18,7 +18,6 @@ library("lambdass")
 ```
 
 ## Usage
-
 ``` r
 # can be written in three ways.
 ~~ .. + 1
@@ -27,7 +26,7 @@ x %->% {x + 1}
 # all means add one
 function(x) x + 1
 ```
-
+### f.
 ``` r
 # the function name f() is used in many situation, so I avoid using it and `f.` is adopted.
 # f.(...arguments, body)
@@ -40,7 +39,23 @@ Map(f.(x, x ^ 2), 1:10)
 Reduce(f.(x, y, x + y), 1:10)
 ```
 
+``` r
+## f.() is reorganized by C-lang.
+## Original code is written in R. See f.r().
+identical(f.(x, y, x + y), f.r(x, y, x + y))
 
+## about ten times speed-up
+microbenchmark::microbenchmark(
+  f.(x, y, x + y), 
+  f.r(x, y, x + y),
+)
+# Unit: microseconds
+#              expr    min      lq     mean median     uq     max neval
+#   f.(x, y, x + y)  4.904  6.0185  7.95367  7.579  8.025  50.375   100
+#  f.r(x, y, x + y) 73.556 75.3395 86.02026 76.231 83.809 214.871   100
+```
+
+### double-tilda
 ``` r
 # double-tilda with dotted placeholder
 # A bounded vairable can be specified by tow-dots placeholder.
@@ -49,11 +64,11 @@ Reduce(f.(x, y, x + y), 1:10)
 ~~ ..1 * (..1 + ..2)
 # cannot define curried-function such as `function(x) function(y) x + y`
 
-
 Map(~~ .. ^ 2, 1:10)
 Reduce(~~ ..1 + ..2, 1:10)
 ```
 
+### arrow-notation
 ``` r
 # arrow-notation
 # right-hand side always needs `{` because R cannot control
@@ -81,12 +96,12 @@ f(x:character, y = "") %->% {paste0(x, y)}
 
 ## Benchmarking
 ``` r
-# note that it's nanoseconds
+## note that it's nanoseconds
 > microbenchmark::microbenchmark(f.(x, x), x %->% {x}, ~~ .., function(x) x)
 Unit: nanoseconds
              expr    min       lq      mean median       uq    max neval
-         f.(x, x)  97181 100302.0 109979.55 103868 106097.0 543409   100
- x %->% {     x } 123928 126602.5 136681.82 130169 132174.5 406108   100
-             ~~.. 278168 281735.0 291996.59 284409 291764.5 431963   100
-    function(x) x      0    446.0    620.39    447    892.0   1338   100
+         f.(x, x)   5796   6910.5  10200.45  10253  10922.5  57953   100
+ x %->% {     x }  96291  99858.0 112669.64 103870 107882.0 459610   100
+             ~~.. 260342 264130.5 286964.33 268366 280402.0 541189   100
+    function(x) x      0    447.0    856.67    892    893.0   4459   100
 ```
