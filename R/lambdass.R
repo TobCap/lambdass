@@ -8,6 +8,7 @@
 #' If two or more argument is passed, the last part is parsed as lambda's body
 #' and the rest are parsed as formal parameters for lambda.
 #' @param env_ an environment in which call object is evaluated.
+#' @useDynLib lambdass C_f
 #' @examples
 #'  f.(x, x + 1) # => function(x) x + 1
 #'  f.(x, f.(y, x + y)) #=>
@@ -22,7 +23,7 @@ NULL
 as.formals <- function(x, value = list(quote(expr=))) {
   ## a faster version of tools:::as.alist.call
   if (!all(nzchar(x)))
-    stop('Including "" or substitute() is invalid input.')
+    stop('Including "" or missing_arg is invalid input.')
 
   if (length(x) == 0)
     return(NULL)
@@ -37,27 +38,33 @@ as.formals <- function(x, value = list(quote(expr=))) {
     new_names <-
       if (length(x) == 1 && !is.recursive(x)) as.character(x)
       else vapply(x, as.character, "")
-    return(`names<-`(as.pairlist(rep_len(value, length(x))), new_names))
+    ans <- `names<-`(as.pairlist(rep_len(value, length(x))), new_names)
+  } else {
+    ans <- as.list(x)
+    idx <- which(!nzchar(names(ans)))
+    names(ans)[idx] <- vapply(ans[idx], as.character, "")
+    ans[idx] <- rep_len(value, length(idx))
   }
 
-  ans <- as.list(x)
-  idx <- which(!nzchar(names(ans)))
-  names(ans)[idx] <- vapply(ans[idx], as.character, "")
-  ans[idx] <- rep_len(value, length(idx))
+  if (anyDuplicated.default(names(ans)))
+    stop("arguments must have unique name")
+
   as.pairlist(ans)
 }
 
 #' @rdname lambdass
 #' @export
 is.formals <- function(y) {
-  is.pairlist(y) && length(y) == sum(nzchar(names(y)))
+  is.pairlist(y) &&
+    length(y) == sum(nzchar(names(y))) &&
+    !anyDuplicated.default(names(y))
 }
 
 ### sugar-syntax for lambda
 ### adopt `f.` instead of `f` because `f` often causes conflicts in many sample codes.
 #' @rdname lambdass
 #' @export
-f. <- function(..., env_ = parent.frame()) {
+f.r <- function(..., env_ = parent.frame()) {
   # see https://gist.github.com/TobCap/6366396 for how to handle unevaluated `...`
   d <- as.pairlist(as.vector(substitute((...)), "list")[-1])
   # need to be pairlist to return NULL when nothing is passed to `...`.
@@ -65,3 +72,7 @@ f. <- function(..., env_ = parent.frame()) {
   n <- length(d)
   eval(call("function", as.formals(d[-n]), d[[n]]), env_)
 }
+
+#' @rdname lambdass
+#' @export
+f. <- function(...) .Call(C_f, substitute((...)), parent.frame())
