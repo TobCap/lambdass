@@ -14,6 +14,8 @@ function.
 ## Installation
 ``` r
 devtools::install_github("tobcap/lambdass")
+## if you want this package to be compiled,
+# devtools::install_github("tobcap/lambdass", args = "--byte-compile")
 library("lambdass")
 ```
 
