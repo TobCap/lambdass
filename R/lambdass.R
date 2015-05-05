@@ -8,7 +8,7 @@
 #' If two or more argument is passed, the last part is parsed as lambda's body
 #' and the rest are parsed as formal parameters for lambda.
 #' @param env_ an environment in which call object is evaluated.
-#' @useDynLib lambdass C_f
+#' @useDynLib lambdass C_f C_fs
 #' @examples
 #'  f.(x, x + 1) # => function(x) x + 1
 #'  f.(x, f.(y, x + y)) #=>
@@ -75,4 +75,8 @@ f.r <- function(..., env_ = parent.frame()) {
 
 #' @rdname lambdass
 #' @export
-f. <- function(...) .Call(C_f, substitute((...)), parent.frame())
+f.s <- function(...) .Call(C_fs, substitute((...)), parent.frame())
+
+#' @rdname lambdass
+#' @export
+f. <- function(...) .Call(C_f, environment(), parent.frame())
