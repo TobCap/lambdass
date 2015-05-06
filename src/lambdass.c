@@ -3,6 +3,7 @@
 
 SEXP makeClosure(SEXP formals, SEXP body, SEXP env);
 void anyDuplicateNames(SEXP plist);
+void ensureNotNamed(SEXP bd);
 
 SEXP C_fs(SEXP args, SEXP env) {
   SEXP argsnew, ansp, body;
@@ -57,6 +58,11 @@ void anyDuplicateNames(SEXP plist) {
     error("arguments must have unique name");
 }
 
+void ensureNotNamed(SEXP bd) {
+  if (TAG(bd) != R_NilValue)
+    error("the last element should not be named");
+}
+
 SEXP C_f(SEXP env, SEXP rho) {
   SEXP dots = findVarInFrame(env, R_DotsSymbol);
 
@@ -74,6 +80,7 @@ SEXP C_f(SEXP env, SEXP rho) {
     return makeClosure(R_NilValue, R_NilValue, rho);
   }
   if (len == 1) {
+    ensureNotNamed(dots);
     return makeClosure(R_NilValue, PREXPR(CAR(dots)), rho);
   }
 
@@ -98,6 +105,7 @@ SEXP C_f(SEXP env, SEXP rho) {
 
   body = PREXPR(CAR(dots)); // last element
 
+  ensureNotNamed(dots);
   anyDuplicateNames(ansp);
 
   UNPROTECT(1);
