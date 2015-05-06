@@ -75,4 +75,4 @@ f.r <- function(..., env_ = parent.frame()) {
 
 #' @rdname lambdass
 #' @export
-f. <- function(...) .Call(C_f, substitute((...)), parent.frame())
+f. <- function(...) .Call(C_f, environment(), parent.frame())

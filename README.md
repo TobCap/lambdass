@@ -114,3 +114,6 @@ Unit: nanoseconds
    as.function  41905  44356.5  55965.23  54610.5  59067.5 267474   100
  function(x) x      0    447.0    754.24    892.0    893.0   2230   100
 ```
+
+## Church Encoding
+`vignettes("ChurchEncoding")` or see https://github.com/TobCap/lambdass/vignettes/ChurchEncoding.Rmd

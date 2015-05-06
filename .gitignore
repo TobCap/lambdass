@@ -4,3 +4,4 @@ src/*.o-*
 .RData
 .Rproj.user
 .Rhistory
+inst/doc

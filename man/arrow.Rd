@@ -12,8 +12,6 @@ lhs \%->\% rhs
 but \code{f(x, y)} or \code{{x; y}} is recommended.}
 
 \item{rhs}{body for lambda}
-
-\item{env_}{environment where expressions are evaluated.}
 }
 \description{
 arrow function can check arguments class.

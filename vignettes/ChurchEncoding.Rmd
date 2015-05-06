@@ -1,0 +1,142 @@
+---
+title: "Church Encoding with lambdass"
+author: '@TobakuCptlsm on twitter'
+date: '`r Sys.Date()`'
+output:
+  html_document:
+    highlight: haddock
+    theme: united
+  md_document:
+    pandoc_args: --no-wrap
+    variant: markdown_github
+---
+<!--
+  %\VignetteIndexEntry{Church Encoding with lambdass}
+  %\VignetteEngine{knitr::rmarkdown}
+-->
+
+> Church encoding is a means of representing data and operators in the lambda calculus.
+
+from http://en.wikipedia.org/wiki/Church_encoding. All the codes written in below refer to the wikipedia's examples.
+
+## preliminary
+```{r, eval=TRUE, message=FALSE}
+# devtools::install_github("tobcap/lambdass")
+library(lambdass)
+
+# auxiliary functions
+"%|>%" <- function(x, f) f(x) # forward pipe operator
+"%<|%" <- function(f, x) f(x) # backward pipe operator
+
+# church numeral to R numeric
+to_int <- f.(n, n(f.(n, n + 1L))(0L))
+# church boolean to R logical
+to_logical <-f.(f, identical(true, f, ignore.environment = TRUE))
+
+```
+
+## Church numerals
+```{r, eval=TRUE, collapse=TRUE, highlight=TRUE}
+zero <- f.(f, f.(x, x))
+one  <- f.(f, f.(x, f(x)))
+two  <- f.(f, f.(x, f(f(x))))
+three<- f.(f, f.(x, f(f(f(x)))))
+# macro for numbers
+num  <- f.(n, {
+  nested <- (function(n, acc) {
+    if (n == 0) acc
+    else Recall(n - 1, call("f", acc))
+  })(n, quote(x))
+  eval(substitute(f.(f, f.(x, nest_fx)), list(nest_fx = nested)), parent.frame())
+})
+
+plus <- f.(m, f.(n, f.(f, f.(x, m(f)(n(f)(x))))))
+succ <- f.(n, f.(f, f.(x, f(n(f)(x)))))
+mult <- f.(m, f.(n, f.(f, m(n(f)))))
+exp  <- f.(m, f.(n, n(m)))
+pred <- f.(n, f.(f, f.(x, n(f.(g, f.(h, h(g(f))))) (f.(u, x)) (f.(u, u)))))
+minus <- f.(m, f.(n, (n(pred))(m)))
+
+identical(three, num(3))
+to_int(plus(zero)(one))
+to_int(plus(one)(two))
+to_int(succ(one))
+to_int(num(99))
+to_int(plus(num(5))(num(3)))
+to_int(minus(num(5))(num(3)))
+to_int(mult(num(5))(num(3)))
+num(3) %|>% mult %<|% num(5) %|>% to_int
+
+```
+
+## Church booleans
+```{r, eval=TRUE, collapse=TRUE}
+true <- f.(a, f.(b, a))
+false <- f.(a, f.(b, b))
+and <- f.(m, f.(n, m(n)(m)))
+or <- f.(m, f.(n, m(m)(n)))
+not1 <- f.(m, f.(a, f.(b, m(b)(a)))) # this does not work in R
+not2 <- f.(m, m(f.(a, f.(b, b)))(f.(a, f.(b, a)))) # ok due to normal-orer
+if_ <- f.(m, f.(a, f.(b, m(a)(b))))
+
+is_zero <- f.(n, n(f.(x, false))(true))
+leq <- f.(m, f.(n, is_zero(minus(m)(n))))
+eq <- f.(m, f.(n, and(leq(m)(n))(leq(n)(m))))
+
+and(true)(true) %|>% to_logical
+and(true)(false) %|>% to_logical
+and(false)(true) %|>% to_logical
+and(false)(fakse) %|>% to_logical
+
+or(true)(true) %|>% to_logical
+or(true)(false) %|>% to_logical
+or(false)(true) %|>% to_logical
+or(false)(false) %|>% to_logical
+
+not2(false) %|>% to_logical
+not2(true) %|>% to_logical
+
+to_int(if_(true)(one)(two))
+to_int(if_(false)(one)(two))
+
+to_logical(eq(three)(num(3)))
+to_logical(eq(plus(one)(two))(three))
+to_logical(eq(num(6))(mult(two)(three)))
+```
+
+## Church pairs and list
+```{r, eval=TRUE, collapse=TRUE}
+# pair
+pair <- f.(x, f.(y, f.(z, z(x)(y))))
+first <- f.(p, p(f.(x, f.(y, x))))
+second <- f.(p, p(f.(x, f.(y, y))))
+
+first(pair(1)(2))
+second(pair(1)(2))
+
+# list
+nil <- pair(true)(true)
+isnil <- first
+cons <- f.(h, f.(t, pair(false)(pair(h)(t))))
+head <- f.(z, first(second(z)))
+tail <- f.(z, second(second(z)))
+
+# R's pairlist defined in C source code is as:
+# CONS(ScalarInteger(1), CONS(ScalarInteger(2), CONS(ScalarInteger(3), R_Nilvalue)))
+# The essential difference is whether a constructor funtion is curried or not.
+lst <- cons(one)(cons(two)(cons(three)(nil)))
+
+head(lst) %|>% to_int
+head(tail(lst)) %|>% to_int
+head(tail(tail(lst))) %|>% to_int
+lst %|>% tail %|>% tail %|>% head %|>% to_int
+lst %|>% tail %|>% tail %|>% tail %|>% isnil %|>% to_logical
+```
+
+## References
+* http://en.wikipedia.org/wiki/Church_encoding
+* http://taiju.hatenablog.com/entry/20120529/1338299884
+
+## Rmarkdown options
+* http://www.rstudio.com/wp-content/uploads/2015/03/rmarkdown-reference.pdf
+* http://rmarkdown.rstudio.com/html_document_format.html

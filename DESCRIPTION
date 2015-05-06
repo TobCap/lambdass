@@ -7,4 +7,5 @@ Authors@R: person("tob", "", email = "tobakucapitalism@gmail.com",
   role = c("aut", "cre"))
 Description: Syntax-sugar for lambda. It is very simple and you can save typing.
 License: MIT + file LICENSE
-Suggests: testthat
+Suggests: testthat, knitr, rmarkdown
+VignetteBuilder: knitr

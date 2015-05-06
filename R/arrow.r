@@ -6,7 +6,6 @@
 #' @param lhs formal parameters: any R parsable expression is acceptable,
 #' but \code{f(x, y)} or \code{{x; y}} is recommended.
 #' @param rhs body for lambda
-#' @param env_ environment where expressions are evaluated.
 #' @examples
 #' {} %->% {x + 2}
 #' x %->% {x + 1}
@@ -20,7 +19,9 @@ NULL
 
 #' @rdname arrow
 #' @export
-`%->%` <- function(lhs, rhs, env_ = parent.frame()) {
+`%->%` <- function(lhs, rhs) {
+  env_ = parent.frame()
+
   # as.formals <- function(xs) as.pairlist(tools:::as.alist.call(xs))
   lhs_expr <- substitute(lhs)
   if (length(lhs_expr) > 1) {
