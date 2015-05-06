@@ -4,7 +4,6 @@
 \alias{as.formals}
 \alias{f.}
 \alias{f.r}
-\alias{f.s}
 \alias{is.formals}
 \alias{lambdass}
 \title{Syntax sugar of making an anonymous function}
@@ -14,8 +13,6 @@ as.formals(x, value = list(quote(expr = )))
 is.formals(y)
 
 f.r(..., env_ = parent.frame())
-
-f.s(...)
 
 f.(...)
 }
