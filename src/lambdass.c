@@ -58,43 +58,48 @@ void anyDuplicateNames(SEXP plist) {
 }
 
 SEXP C_f(SEXP env, SEXP rho) {
-  SEXP dots = findVar(install("..."), env);
+  SEXP dots = findVarInFrame(env, R_DotsSymbol);
+
+/*
   Rprintf("type %s \n", type2char(TYPEOF(dots)));
-  //Rprintf("TAG %s \n", CHAR(PRINTNAME((TAG(dots)))));
+  Rprintf("TAG %s \n", TAG(dots) == R_NilValue ? "Nil" : CHAR(PRINTNAME((TAG(dots)))));
+  Rprintf("length %d \n", length(dots));
+  Rprintf("missing? %d \n", dots == R_MissingArg);
+  Rprintf("\n");
+  */
 
   int len = length(dots);
+
+  if (dots == R_MissingArg) { // Nothing is passed to
+    return makeClosure(R_NilValue, R_NilValue, rho);
+  }
   if (len == 1) {
-    if (dots == R_NilValue) {
-      return makeClosure(R_NilValue, R_NilValue, rho);
-    } else {
-      return makeClosure(R_NilValue, PREXPR(CAR(dots)), rho);
-    }
+    return makeClosure(R_NilValue, PREXPR(CAR(dots)), rho);
   }
 
-  Rprintf("dots lentgth is %d\n", len);
 
-  SEXP args, argsnew, ansp, body;
-  args = dots;
-
-
+  SEXP argsnew, ansp, body;
   PROTECT(argsnew = ansp = allocList(len - 1));
   while (--len) {
-    if (TAG(args) == R_NilValue) {
-      if (TYPEOF(PREXPR(CAR(args))) != SYMSXP) {
+    SEXP expr = PREXPR(CAR(dots));
+    if (TAG(dots) == R_NilValue) {
+      if (TYPEOF(expr) != SYMSXP) {
         error("argument must be a symbol or `Name=Value` style");
       }
       SETCAR(argsnew, R_MissingArg);
-      SET_TAG(argsnew, PREXPR(CAR(args)));
+      SET_TAG(argsnew, expr);
     } else {
-      SETCAR(argsnew, PREXPR(CAR(args)));
-      SET_TAG(argsnew, TAG(args));
+      SETCAR(argsnew, expr);
+      SET_TAG(argsnew, TAG(dots));
     }
     argsnew = CDR(argsnew);
-    args = CDR(args);
+    dots = CDR(dots);
   }
-  body = PREXPR(CAR(args)); // last element
+
+  body = PREXPR(CAR(dots)); // last element
 
   anyDuplicateNames(ansp);
+
   UNPROTECT(1);
   return makeClosure(ansp, body, rho);
 
