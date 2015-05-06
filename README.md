@@ -116,4 +116,5 @@ Unit: nanoseconds
 ```
 
 ## Church Encoding
-`vignettes("ChurchEncoding")` or see https://github.com/TobCap/lambdass/vignettes/ChurchEncoding.Rmd
+## by using f.(), R notation is almost as-is with the article written in  wikipedia
+https://github.com/TobCap/lambdass/blob/master/vignettes/ChurchEncoding.html
