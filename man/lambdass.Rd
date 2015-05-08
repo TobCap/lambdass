@@ -17,11 +17,11 @@ f.r(..., env_ = parent.frame())
 f.(...)
 }
 \arguments{
-\item{x}{x is coerced to character (internally STRSXP).}
+\item{x}{coerced to character (internally STRSXP).}
 
-\item{value}{a default value of a formal parameter.}
+\item{value}{a default value for making formal parameters.}
 
-\item{y}{y is expected to be pairlist object with completely named}
+\item{y}{expected to be a pairlist object which is all different named.}
 
 \item{...}{If one argument is passed, that is parsed as lambda's body.
 If two or more argument is passed, the last part is parsed as lambda's body
@@ -34,7 +34,7 @@ Syntax sugar of making an anonymous function
 }
 \examples{
 f.(x, x + 1) # => function(x) x + 1
- f.(x, f.(y, x + y)) #=>
+ f.(x, f.(y, x + y)) # => semantics is: function(x) function(y) x + y
  Reduce(f.(x, y, x + y), 1:10) # => 55
  Filter(f.(x, x \%\% 2 == 0), 1:10) # => c(2L, 4L, 6L, 8L, 10L)
 }

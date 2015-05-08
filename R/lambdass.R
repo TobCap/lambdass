@@ -1,9 +1,9 @@
 #' Syntax sugar of making an anonymous function
 #'
 #' @name lambdass
-#' @param x x is coerced to character (internally STRSXP).
-#' @param y y is expected to be pairlist object with completely named
-#' @param value a default value of a formal parameter.
+#' @param x coerced to character (internally STRSXP).
+#' @param y expected to be a pairlist object which is all different named.
+#' @param value a default value for making formal parameters.
 #' @param ...  If one argument is passed, that is parsed as lambda's body.
 #' If two or more argument is passed, the last part is parsed as lambda's body
 #' and the rest are parsed as formal parameters for lambda.
@@ -11,11 +11,10 @@
 #' @useDynLib lambdass C_f
 #' @examples
 #'  f.(x, x + 1) # => function(x) x + 1
-#'  f.(x, f.(y, x + y)) #=>
+#'  f.(x, f.(y, x + y)) # => semantics is: function(x) function(y) x + y
 #'  Reduce(f.(x, y, x + y), 1:10) # => 55
 #'  Filter(f.(x, x %% 2 == 0), 1:10) # => c(2L, 4L, 6L, 8L, 10L)
-#'
-#'
+
 NULL
 
 #' @rdname lambdass
