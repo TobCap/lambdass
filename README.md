@@ -117,4 +117,5 @@ Unit: nanoseconds
 
 ## Church Encoding
 ## by using f.(), R notation is almost as-is with the article written in  wikipedia
-https://github.com/TobCap/lambdass/blob/master/vignettes/ChurchEncoding.html
+https://gist.github.com/TobCap/68cd365e04dcbfac4873
+https://github.com/TobCap/lambdass/blob/master/vignettes/ChurchEncoding.Rmd
