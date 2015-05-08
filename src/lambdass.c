@@ -56,12 +56,15 @@ SEXP C_f(SEXP env, SEXP rho) {
 
   UNPROTECT(1);
   return makeClosure(ansp, body, rho);
-
-  return R_NilValue;
 }
 
 SEXP makeClosure(SEXP formals, SEXP body, SEXP env) {
   SEXP cl = PROTECT(allocSExp(CLOSXP));
+
+  // non-checking version of mkCLOSXP in "dstruct.c"
+  // I'm not sure whether PROTECT() is required or not for formals, body, and env.
+  // https://github.com/wch/r-source/blob/ed415a8431b32e079100f50a846e4769aeb54d5a/src/main/dstruct.c#L81-L83
+
   SET_FORMALS(cl, formals);
   SET_BODY(cl, body);
   SET_CLOENV(cl, env);
