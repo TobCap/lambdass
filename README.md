@@ -6,9 +6,9 @@ function.
 
 ## Related packages and functions
 ##### please tell me if you know other packages.
-* pryr::f(), pyry::make_function() from https://github.com/hadley/pryr
-* lambda.r::`%as%` from https://github.com/zatonovo/lambda.r
-* lambdaR::lambda() from https://github.com/hoxo-m/lambdaR    
+* `pryr::f()`, `pyry::make_function()` from https://github.com/hadley/pryr
+* `lambda.r::"%as%"` from https://github.com/zatonovo/lambda.r
+* `lambdaR::lambda()` from https://github.com/hoxo-m/lambdaR    
 
 
 ## Installation
@@ -100,7 +100,7 @@ f(x:character, y = "") %->% {paste0(x, y)}
 ``` r
 ## note that it's nanoseconds
 > microbenchmark::microbenchmark(
-  f. = f.(x, x), 
+  "f." = f.(x, x), 
   "%->%" = x %->% {x}, 
   "~~" = ~~ ..,
   "as.function" = as.function(alist(x=, x)),
@@ -116,6 +116,5 @@ Unit: nanoseconds
 ```
 
 ## Church Encoding
-## by using f.(), R notation is almost as-is with the article written in  wikipedia
-https://gist.github.com/TobCap/68cd365e04dcbfac4873
-https://github.com/TobCap/lambdass/blob/master/vignettes/ChurchEncoding.Rmd
+by using f.(), R notation is almost as-is with the article written in  wikipedia
+https://github.com/TobCap/lambdass/blob/master/vignettes/ChurchEncoding.md

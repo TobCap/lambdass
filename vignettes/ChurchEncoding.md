@@ -3,6 +3,9 @@
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 -->
+Church Encoding (Lambda Calculus) with lambdass
+===============================================
+
 > Church encoding is a means of representing data and operators in the lambda calculus.
 
 from <http://en.wikipedia.org/wiki/Church_encoding>. All the codes written in below refer to the wikipedia's examples.

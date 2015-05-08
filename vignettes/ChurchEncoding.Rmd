@@ -16,6 +16,7 @@ output:
   %\VignetteEngine{knitr::rmarkdown}
   \usepackage[utf8]{inputenc}
 -->
+# Church Encoding (Lambda Calculus) with lambdass
 
 > Church encoding is a means of representing data and operators in the lambda calculus.
 
@@ -34,7 +35,6 @@ library(lambdass)
 to_int <- f.(n, n(f.(n, n + 1L))(0L))
 # church boolean to R logical
 to_logical <-f.(f, identical(true, f, ignore.environment = TRUE))
-
 ```
 
 ## Church numerals
