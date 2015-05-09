@@ -16,6 +16,7 @@
 #' @param ... expression starts with \code{~~}
 #' @param env_ environment where \code{...} is evaluated
 #' @name double-tilda
+#' @useDynLib lambdass C_double_tilda
 #' @examples
 #' # `x`, `x1`, and `x2` are bound variables, does not matter if
 #' # they are shown in other symbols.
@@ -34,10 +35,14 @@ NULL
 #' @rdname double-tilda
 #' @export
 `~` <- function(..., env_ = parent.frame()) {
+  #return(.Call(C_double_tilda, environment(), parent.frame()))
+  browser()
+  dots <- as.vector(substitute((...)), "list")[-1]
 
-  dots <- as.list.default(substitute((...)))[-1]
-  if (length(dots) != 1 || length(dots[[1]]) == 1 || dots[[1]][[1]] != "~")
-    return(as.formula(deparse(as.call(c(quote(`~`), dots))), env_))
+  # length(dots) > 1 => there exists left^hand side variables in tilda
+  # length(dots[[1]]) != 2 => not unary-function in right-hand side
+  if (length(dots) > 1 || length(dots[[1]]) != 2 || dots[[1]][[1]] != "~")
+    return(as.formula(as.call(c(quote(`~`), dots)), env_))
 
   expr <- dots[[1]][[2]]
 

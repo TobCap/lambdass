@@ -7,7 +7,6 @@ void ensureNotNamed(SEXP bd);
 
 SEXP C_f(SEXP env, SEXP rho) {
   SEXP dots = findVarInFrame(env, R_DotsSymbol);
-
   /*
   Rprintf("type %s \n", type2char(TYPEOF(dots)));
   Rprintf("TAG %s \n", TAG(dots) == R_NilValue ? "Nil" : CHAR(PRINTNAME((TAG(dots)))));
@@ -16,7 +15,7 @@ SEXP C_f(SEXP env, SEXP rho) {
   Rprintf("\n");
   */
 
-  int len = length(dots);
+  R_len_t len = length(dots);
 
   if (dots == R_MissingArg) { // Nothing is passed
     return makeClosure(R_NilValue, R_NilValue, rho);
@@ -57,6 +56,36 @@ SEXP C_f(SEXP env, SEXP rho) {
   UNPROTECT(1);
   return makeClosure(ansp, body, rho);
 }
+
+SEXP C_double_tilda(SEXP env, SEXP rho) {
+  SEXP dots = findVarInFrame(env, R_DotsSymbol);
+  R_len_t len = length(dots);
+
+  Rprintf("type %s \n", type2char(TYPEOF(dots)));
+  Rprintf("TAG %s \n", TAG(dots) == R_NilValue ? "Nil" : CHAR(PRINTNAME((TAG(dots)))));
+  Rprintf("length %d \n", length(dots));
+  Rprintf("missing? %d \n", dots == R_MissingArg);
+  Rprintf("\n");
+
+  SEXP car_ = PREXPR(CAR(dots));
+
+  Rprintf("type %s \n", type2char(TYPEOF(car_)));
+  Rprintf("TAG %s \n", TAG(car_) == R_NilValue ? "Nil" : CHAR(PRINTNAME((TAG(car_)))));
+  Rprintf("length %d \n", length(car_));
+  Rprintf("missing? %d \n", car_ == R_MissingArg);
+  Rprintf("\n");
+
+  if (len != 1)
+    return R_NilValue;
+
+  return R_NilValue;
+}
+
+
+
+
+
+
 
 SEXP makeClosure(SEXP formals, SEXP body, SEXP env) {
   SEXP cl = PROTECT(allocSExp(CLOSXP));
