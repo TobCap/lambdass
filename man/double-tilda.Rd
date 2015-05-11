@@ -5,12 +5,12 @@
 \alias{~}
 \title{Syntax sugar of making an anonymous function}
 \usage{
-"~"(..., env_ = parent.frame())
+"~"(e1, e2)
 }
 \arguments{
-\item{...}{expression starts with \code{~~}}
-
-\item{env_}{environment where \code{...} is evaluated}
+\item{e1,e2}{The original-tilda is both unary and binary function. if \code{e2}
+is missing and \code{e1}'s first call object is \code{~}, then anonymous function
+is made.}
 }
 \description{
 Tilda is a very useful symbol because rest parts are not evaluated.
@@ -29,7 +29,7 @@ Unsupported nested lambda.
 Use \code{f.} and type this; \code{f.(x, f.(y, x + y))}
 }
 \examples{
-# `x`, `x1`, and `x2` are bound variables, does not matter if
+# \\code{x}, \\code{x1}, and \\code{x2} are bound variables, does not matter if
 # they are shown in other symbols.
 ~~ .. + 1 # => function(x) x + 1
 ~~ ..1 + ..2 # => function(x1, x2) x1 + x2

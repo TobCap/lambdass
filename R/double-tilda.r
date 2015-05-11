@@ -13,8 +13,9 @@
 #' @details Unsupported nested lambda.
 #' \code{function(x) function(y) x + y} cannot define by double-tilda.
 #' Use \code{f.} and type this; \code{f.(x, f.(y, x + y))}
-#' @param ... expression starts with \code{~~}
-#' @param env_ environment where \code{...} is evaluated
+#' @param e1,e2 The original-tilda is both unary and binary function. if \code{e2}
+#'  is missing and \code{e1}'s first call object is \code{~}, then anonymous function
+#'  is made.
 #' @name double-tilda
 #' @useDynLib lambdass C_double_tilda
 #' @examples
@@ -34,17 +35,15 @@ NULL
 
 #' @rdname double-tilda
 #' @export
-`~` <- function(..., env_ = parent.frame()) {
-  #return(.Call(C_double_tilda, environment(), parent.frame()))
-  browser()
-  dots <- as.vector(substitute((...)), "list")[-1]
+`~` <- function(e1, e2) {
+  env_ = parent.frame()
+  return(.Call(C_double_tilda, environment(), parent.frame()))
 
-  # length(dots) > 1 => there exists left^hand side variables in tilda
-  # length(dots[[1]]) != 2 => not unary-function in right-hand side
-  if (length(dots) > 1 || length(dots[[1]]) != 2 || dots[[1]][[1]] != "~")
-    return(as.formula(as.call(c(quote(`~`), dots)), env_))
+  e1_expr <- substitute(e1)
+  if (!missing(e2) || length(e1_expr) != 2 || e1_expr[[1]] != "~")
+    return(as.formula(as.call(c(quote(`~`), e1_expr)), env_))
 
-  expr <- dots[[1]][[2]]
+  expr <- e1_expr[[2]]
 
   all_vars <- all.names(expr, functions = FALSE, unique = TRUE)
   args_char <- sort.default(all_vars[grep("^..$|^..[0-9]+$", all_vars)])
