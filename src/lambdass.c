@@ -137,31 +137,27 @@ void ensureNotNamed(SEXP bd) {
 int ddValMod(SEXP symbol)
 {
   char *endp;
-  int rval;
   const char *buf = CHAR(PRINTNAME(symbol));
   
-  if( !strncmp(buf,"..",2) && strlen(buf) > 2) {
-    
-    buf += 2;
-    rval = (int) strtol(buf, &endp, 10);
-    if( *endp != '\0')
+  if( !strncmp(buf, "..", 2) ) {
+    if (strlen(buf) == 2) {
       return 0;
-    else
-      return rval;
+    } else {
+      buf += 2;
+      return (int) strtol(buf, &endp, 10);
+    }
   }
   
-  if( !strncmp(buf,"..",2) && strlen(buf) == 2) {
-    return -1;  
-  }
-  return 0;
+  return -1;
 
 }
 
 
 typedef struct {
   SEXP    ans;
-  int    StoreValues;
-  int    ItemCounts;
+  int    ddValues;
+  int    Counts;
+  int    SingleDd;
 } DotsData;
 
 
@@ -171,7 +167,7 @@ void set_dd_sym(SEXP s, SEXP *ans) {
   switch(TYPEOF(s)) {
   case SYMSXP:
     dd_val = ddValMod(s);
-    if (dd_val) {
+    if (dd_val > -1) {
       *ans = CONS(s, *ans);
     }
     break;
