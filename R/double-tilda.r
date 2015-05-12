@@ -37,7 +37,7 @@ NULL
 #' @export
 `~` <- function(e1, e2) {
   env_ = parent.frame()
-  return(.Call(C_double_tilda, environment(), parent.frame()))
+  return(.Call(C_double_tilda, environment(), env_))
 
   e1_expr <- substitute(e1)
   if (!missing(e2) || length(e1_expr) != 2 || e1_expr[[1]] != "~")
