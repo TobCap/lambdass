@@ -6,7 +6,8 @@ void ensureNonDuplicateNames(SEXP plist);
 void ensureNotNamed(SEXP bd);
 SEXP get_all_syms(SEXP expr);
 SEXP get_dd_syms(SEXP expr);
-
+SEXP get_direct_dd_sym(SEXP e);
+void set_dd_sym(SEXP s, SEXP *ans);
 
 SEXP C_f(SEXP env, SEXP rho) {
   SEXP dots = findVarInFrame(env, R_DotsSymbol);
@@ -68,8 +69,9 @@ SEXP C_double_tilda(SEXP env, SEXP rho) {
   Rprintf("type of e1 is %s \n", type2char(TYPEOF(e1)));
   SEXP e1_expr = PREXPR(e1);
 
-  Rprintf("type of e2 is %s \n", type2char(TYPEOF(e2)));
+  //Rprintf("type of e2 is %s \n", type2char(TYPEOF(e2)));
   SEXP e2_expr = PREXPR(e2);
+  /*
   Rprintf("\n");
   
   Rprintf("e1_expr info\n");
@@ -80,14 +82,17 @@ SEXP C_double_tilda(SEXP env, SEXP rho) {
   Rprintf("\n");
 
   Rprintf("CAR(e1_expr) info\n");
+   */
+  
   SEXP car_ = CAR(e1_expr);
+  /*
   Rprintf("type %s \n", type2char(TYPEOF(car_)));
   Rprintf("length %d \n", length(car_));
   Rprintf("\n");
   
   Rprintf("is tilda? %d \n", car_ == install("~"));
   Rprintf("\n");
-  
+  */  
   if (TYPEOF(e2) == SYMSXP) {
     Rprintf("e2_expr info\n");
     Rprintf("type %s \n", type2char(TYPEOF(e2_expr)));
@@ -108,8 +113,8 @@ SEXP C_double_tilda(SEXP env, SEXP rho) {
   SEXP expr = CDR(e1_expr);
   
   SEXP all_nms;
-  all_nms = get_dd_syms(expr);
-  
+  //all_nms = get_dd_syms(expr);
+  all_nms = get_direct_dd_sym(expr);
    /*
   static const char *dot_names[] = {"..", "..1", "..2", "..3", "..4", "..5", "..6", "..7", "..8", "..9"};
   SEXP lst = PROTECT(mkNamed(VECSXP, dot_names));
@@ -232,25 +237,31 @@ SEXP get_all_syms(SEXP expr) {
 
 int ddValMod(SEXP symbol)
 {
-  Rprintf("hear ddValMod\n");
+  Rprintf("ddValMod0\n");
   //const char *buf;
   char *endp;
   int rval;
   
-  Rprintf("hear ddValMod 1\n");
+  Rprintf("ddValMod1\n");
   const char *buf = CHAR(PRINTNAME(symbol));
-  Rprintf("hear ddValMod 2\n");
+  Rprintf("ddValMod2\n");
   
   if( strlen(buf) > 2 && !strncmp(buf,"..",2) ) {
-    Rprintf("hear ddValMod 3\n");
+    Rprintf("ddValMod3\n");
     buf += 2;
     rval = (int) strtol(buf, &endp, 10);
-    Rprintf("hear ddValMod 4\n");
+    Rprintf("ddValMod4\n");
     if( *endp != '\0')
       return 0;
     else
       return rval;
   }
+  Rprintf("ddValMod5\n");
+  
+  if( strlen(buf) == 2 && !strncmp(buf,"..",2) ) {
+    return -1;  
+  }
+  Rprintf("ddValMod6\n");
   return 0;
 
   /*
@@ -272,7 +283,45 @@ int ddValMod(SEXP symbol)
   */
 }
 
-static void namewalk2(SEXP s, NameWalkData *d)
+void set_dd_sym(SEXP s, SEXP *ans) {
+  Rprintf("dd0\n");
+  switch(TYPEOF(s)) {
+  case SYMSXP:
+    Rprintf("dd1\n");
+    if (ddValMod(s)) {
+      Rprintf("dd11\n");
+      *ans = CONS(s, *ans);
+    }
+    break;
+  case LANGSXP:
+  case LISTSXP:
+    Rprintf("dd2\n");
+    while(s != R_NilValue) {
+      Rprintf("dd21\n");
+      set_dd_sym(CAR(s), ans);
+      Rprintf("dd22\n");
+      s = CDR(s);
+    }
+    Rprintf("dd3\n");
+    break;
+  default:
+    Rprintf("dd4\n");
+    break;
+  }
+}
+
+
+SEXP get_direct_dd_sym(SEXP e) {
+  SEXP ans;
+  PROTECT(ans = R_NilValue);
+  
+  set_dd_sym(duplicate(e), &ans);
+  UNPROTECT(1);
+  return ans;
+}
+
+
+void namewalk2(SEXP s, NameWalkData *d)
 {
   SEXP name;
   Rprintf("namewalk2\n");
