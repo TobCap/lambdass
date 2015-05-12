@@ -279,7 +279,7 @@ static void namewalk2(SEXP s, NameWalkData *d)
   switch(TYPEOF(s)) {
     case SYMSXP:
       name = PRINTNAME(s);
-      Rprintf("at SYM\n");
+      Rprintf("at nw 2\n");
       int i = ddValMod(s);
       Rprintf("at nw 3\n");
       const char *tmp1 =  CHAR(name);
@@ -291,10 +291,12 @@ static void namewalk2(SEXP s, NameWalkData *d)
         if(d->StoreValues) {
           Rprintf("at nw 6\n");
           for(int j = 0 ; j < d->ItemCounts ; j++) {
-            if(STRING_ELT(d->ans, j) == name)
+            //if(VECTOR_ELT(d->ans, j) == name)
+            if(VECTOR_ELT(d->ans, j) == s)
               goto ignore;
           }
-          SET_STRING_ELT(d->ans, d->ItemCounts, name);
+          //SET_VECTOR_ELT(d->ans, d->ItemCounts, name);
+          SET_VECTOR_ELT(d->ans, d->ItemCounts, s);
         }
         d->ItemCounts++;
       }
@@ -321,7 +323,7 @@ SEXP get_dd_syms(SEXP expr) {
   // only count 
   namewalk2(expr, &data);
   savecount = data.ItemCounts;
-  data.ans = allocVector(STRSXP, data.ItemCounts);
+  data.ans = allocVector(VECSXP, data.ItemCounts);
   
   data.StoreValues = 1; // TRUE
   data.ItemCounts = 0;
@@ -334,9 +336,9 @@ SEXP get_dd_syms(SEXP expr) {
     
     SEXP str_tmp;
     PROTECT(str_tmp = data.ans);
-    data.ans = allocVector(STRSXP, data.ItemCounts);
+    data.ans = allocVector(VECSXP, data.ItemCounts);
     for(int i = 0 ; i < data.ItemCounts ; i++)
-      SET_STRING_ELT(data.ans, i, STRING_ELT(str_tmp, i));
+      SET_VECTOR_ELT(data.ans, i, VECTOR_ELT(str_tmp, i));
     UNPROTECT(1);
   }
   
