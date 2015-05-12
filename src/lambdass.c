@@ -5,6 +5,7 @@ SEXP makeClosure(SEXP formals, SEXP body, SEXP env);
 void ensureNonDuplicateNames(SEXP plist);
 void ensureNotNamed(SEXP bd);
 SEXP get_all_syms(SEXP expr);
+SEXP get_dd_syms(SEXP expr);
 
 
 SEXP C_f(SEXP env, SEXP rho) {
@@ -94,7 +95,6 @@ SEXP C_double_tilda(SEXP env, SEXP rho) {
     Rprintf("length %d \n", length(e2_expr));
     Rprintf("missing? %d \n", e2_expr == R_MissingArg);
     Rprintf("\n");
-    
     }
   
   // `TYPEOF(e2) == PROMSXP` means e2 is not R_MissingArg
@@ -105,11 +105,11 @@ SEXP C_double_tilda(SEXP env, SEXP rho) {
     return R_NilValue;
   }
   
-  
   SEXP expr = CDR(e1_expr);
   
   SEXP all_nms;
-  all_nms  = get_all_syms(expr);
+  all_nms = get_dd_syms(expr);
+  
    /*
   static const char *dot_names[] = {"..", "..1", "..2", "..3", "..4", "..5", "..6", "..7", "..8", "..9"};
   SEXP lst = PROTECT(mkNamed(VECSXP, dot_names));
@@ -129,12 +129,6 @@ SEXP C_double_tilda(SEXP env, SEXP rho) {
   */
   return all_nms;
 }
-
-
-
-
-
-
 
 SEXP makeClosure(SEXP formals, SEXP body, SEXP env) {
   SEXP cl = PROTECT(allocSExp(CLOSXP));
@@ -232,4 +226,120 @@ SEXP get_all_syms(SEXP expr) {
   }
   
   return data.ans;
+}
+
+
+
+int ddValMod(SEXP symbol)
+{
+  Rprintf("hear ddValMod\n");
+  //const char *buf;
+  char *endp;
+  int rval;
+  
+  Rprintf("hear ddValMod 1\n");
+  const char *buf = CHAR(PRINTNAME(symbol));
+  Rprintf("hear ddValMod 2\n");
+  
+  if( strlen(buf) > 2 && !strncmp(buf,"..",2) ) {
+    Rprintf("hear ddValMod 3\n");
+    buf += 2;
+    rval = (int) strtol(buf, &endp, 10);
+    Rprintf("hear ddValMod 4\n");
+    if( *endp != '\0')
+      return 0;
+    else
+      return rval;
+  }
+  return 0;
+
+  /*
+  buf = CHAR(PRINTNAME(symbol));
+  Rprintf("%s %d", buf, strlen(buf));
+  if(strlen(buf) >= 2 && !strncmp(buf, "..", 2)) {
+    if (strlen(buf) > 2) {
+      buf += 2;
+      rval = (int) strtol(buf, &endp, 10);
+      if(*endp != '\0')
+        return 0;
+      else
+        return rval;
+    } else {
+      return -1;
+    }
+  }
+  return 0;
+  */
+}
+
+static void namewalk2(SEXP s, NameWalkData *d)
+{
+  SEXP name;
+  Rprintf("namewalk2\n");
+  switch(TYPEOF(s)) {
+    case SYMSXP:
+      name = PRINTNAME(s);
+      Rprintf("at SYM\n");
+      int i = ddValMod(s);
+      Rprintf("at nw 3\n");
+      const char *tmp1 =  CHAR(name);
+      Rprintf("at nw 4\n");
+      //Rprintf("%s  %d", tmp1, ddValMod(name));
+      if (ddValMod(s)) {
+        Rprintf("at nw 5\n");
+        if(tmp1[0] == '\0') goto ignore;
+        if(d->StoreValues) {
+          Rprintf("at nw 6\n");
+          for(int j = 0 ; j < d->ItemCounts ; j++) {
+            if(STRING_ELT(d->ans, j) == name)
+              goto ignore;
+          }
+          SET_STRING_ELT(d->ans, d->ItemCounts, name);
+        }
+        d->ItemCounts++;
+      }
+      Rprintf("before ignore\n");
+      ignore:
+      break;
+    case LANGSXP:
+    case LISTSXP:
+      while(s != R_NilValue) {
+        Rprintf("%s \n", PRINTNAME(CAR(s)));
+        namewalk2(CAR(s), d);
+        s = CDR(s);
+      }
+      break;
+    default:
+      break;
+  }
+}
+
+SEXP get_dd_syms(SEXP expr) {
+  int savecount;
+  NameWalkData data = {NULL, 0, 0};
+  Rprintf("dd1\n");
+  // only count 
+  namewalk2(expr, &data);
+  savecount = data.ItemCounts;
+  data.ans = allocVector(STRSXP, data.ItemCounts);
+  
+  data.StoreValues = 1; // TRUE
+  data.ItemCounts = 0;
+  // set values
+  Rprintf("dd2\n");
+  namewalk2(expr, &data);
+  
+  // if duplicated
+  if(data.ItemCounts != savecount) {
+    
+    SEXP str_tmp;
+    PROTECT(str_tmp = data.ans);
+    data.ans = allocVector(STRSXP, data.ItemCounts);
+    for(int i = 0 ; i < data.ItemCounts ; i++)
+      SET_STRING_ELT(data.ans, i, STRING_ELT(str_tmp, i));
+    UNPROTECT(1);
+  }
+  
+  return data.ans;
+  
 }
