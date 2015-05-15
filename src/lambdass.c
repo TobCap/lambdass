@@ -62,8 +62,8 @@ SEXP C_f(SEXP env, SEXP rho) {
 
 SEXP C_double_tilda(SEXP env, SEXP rho) {
   SEXP e1, e2;
-  e1 = findVarInFrame(env, install("e1"));
-  e2 = findVarInFrame(env, install("e2"));
+  PROTECT(e1 = findVarInFrame(env, install("e1")));
+  PROTECT(e2 = findVarInFrame(env, install("e2")));
   
   SEXP e1_expr, e2_expr;
   PROTECT(e1_expr = PREXPR(e1));
@@ -72,6 +72,7 @@ SEXP C_double_tilda(SEXP env, SEXP rho) {
   // `TYPEOF(e2) == PROMSXP` means e2 is not R_MissingArg
   if (TYPEOF(e2) == PROMSXP || length(e1_expr) != 2 ||  CAR(e1_expr) != install("~")) {
     SEXP ans, klass;
+    
     if (TYPEOF(e2) == PROMSXP) {
       PROTECT(ans = lang3(install("~"), e1_expr, e2_expr));
     } else {
@@ -81,7 +82,7 @@ SEXP C_double_tilda(SEXP env, SEXP rho) {
     PROTECT(klass = mkString("formula"));
     setAttrib(ans, R_ClassSymbol, klass);
     setAttrib(ans, install(".Environment"), rho);
-    UNPROTECT(4);
+    UNPROTECT(6);
     return ans;
   }
   
@@ -91,43 +92,61 @@ SEXP C_double_tilda(SEXP env, SEXP rho) {
   
   // Rprintf("type %s \n", type2char(TYPEOF(expr)));
   
-  SEXP args_newsym;
-  args_newsym = get_new_args(expr);
+  SEXP args_newsym, an;
+  PROTECT(args_newsym = an = get_new_args(expr));
   R_xlen_t len = length(args_newsym);
   
-  if (len == 1 && args_newsym == install("..")) {
-    SEXP arg_d = CONS(args_newsym, R_NilValue);
-    return makeClosure(arg_d, expr, rho);
+  if (len == 1 && CAR(args_newsym) == install("..")) {
+    //Rprintf(".. is called\n");
+    SEXP arg_dot;
+    PROTECT(arg_dot = allocList(1));
+    SET_TAG(arg_dot, CAR(args_newsym));
+    SETCAR(arg_dot, R_MissingArg);
+    UNPROTECT(7);
+    
+    return makeClosure(arg_dot, CAR(expr), rho);
   }
   
   SEXP args_list, substi_list, a, s;
-  PROTECT(args_list = a =  allocList(len));
+  PROTECT(args_list = a = allocList(len));
   PROTECT(substi_list = s = allocList(len));
   
+  /*
   static SEXP dots_sym;
   if (dots_sym == NULL) {
     dots_sym = list5(install("..1"), install("..2"), install("..3"), install("..4"), install("..5"));
   }
+  */
   
-  for (int i = 0; i < len; a = CDR(a), s = CDR(s), i++) {
+  static SEXP dots_syms[5];
+  if (dots_syms[0] == NULL) {
+    //Rprintf("initialized dots_syms\n");
+    dots_syms[0] = install("..1");
+    dots_syms[1] = install("..2");
+    dots_syms[2] = install("..3");
+    dots_syms[3] = install("..4");
+    dots_syms[4] = install("..5");
+  }
+  
+  for (int i = 0; i < len; a = CDR(a), s = CDR(s), an = CDR(an), i++) {
     
-    SET_TAG(a, elt(args_newsym, i));
+    SET_TAG(a, CAR(an));
     SETCAR(a, R_MissingArg);
     
-    SET_TAG(s, elt(dots_sym, i));
-    SETCAR(s, elt(args_newsym, i));
+    SET_TAG(s, dots_syms[i]);
+    SETCAR(s, CAR(an));
   }
   
   //SEXP env2 = NewEnvironment(R_NilValue, duplicate(substi_list), R_BaseEnv);
   SEXP env2;
-  PROTECT(env2= allocSExp(ENVSXP));
+  PROTECT(env2 = allocSExp(ENVSXP));
   SET_FRAME(env2, substi_list);
   SET_ENCLOS(env2, R_EmptyEnv);
   
   SEXP ans_body;
   PROTECT(ans_body= CAR(substitute(expr, env2))); // need CAR to strip top level LANGSXP
   
-  UNPROTECT(7);
+  UNPROTECT(10);
   
   return makeClosure(args_list, ans_body, rho);
 }
