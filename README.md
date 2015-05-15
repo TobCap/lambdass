@@ -1,4 +1,4 @@
-# Lambda Syntax-sugar (lambdass)
+# lambda Syntax-sugar (lambdass)
 
 ## What is this package?
 The purpose of this package is to provide you with easy syntax for making anonymous
@@ -101,18 +101,18 @@ f(x:character, y = "") %->% {paste0(x, y)}
 ## note that it's nanoseconds
 > microbenchmark::microbenchmark(
   "f." = f.(x, x), 
-  "%->%" = x %->% {x}, 
   "~~" = ~~ ..,
+  "%->%" = x %->% x, 
   "as.function" = as.function(alist(x=, x)),
   "function(x) x" = function(x) x
   )
 Unit: nanoseconds
-          expr    min       lq      mean   median       uq    max neval
-            f.   7579   9139.5  10940.42  11146.0  12037.0  22736   100
-          %->% 128388 133515.0 145715.94 136189.5 139978.0 388729   100
-            ~~ 283522 290655.0 302094.39 293776.0 299125.0 456043   100
-   as.function  41905  44356.5  55965.23  54610.5  59067.5 267474   100
- function(x) x      0    447.0    754.24    892.0    893.0   2230   100
+          expr   min     lq      mean   median       uq    max neval
+            f.  5350   6687   7761.91   8025.0   8471.0  12037   100
+            ~~ 11145  12260  14479.95  13375.0  15157.0  77568   100
+          %->% 96737 100303 106864.93 104760.5 106989.5 286642   100
+   as.function 32543  35664  39582.30  38339.0  42796.0  93616   100
+ function(x) x     0    446    544.62    447.0    892.0   1339   100
 ```
 
 ## Church Encoding

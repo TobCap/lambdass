@@ -18,12 +18,13 @@
 #' @name double-tilda
 #' @useDynLib lambdass C_double_tilda
 #' @examples
+#' \donttest{
 #' ~~ .. + 1 # => function(..) .. + 1
 #' ~~ ..1 + ..2 # => function(._1, ._2) ._1 + ._2
-#'
+#' 
 #' Reduce(~~ ..1 + ..2, 1:10)
 #' Filter(~~ .. %% 3 == 0, 1:10)
-#'
+#' }
 #' # The tilda's role remains.
 #' ~ speed + dist
 #' lm(speed ~ dist, data = cars)
