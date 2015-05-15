@@ -1,11 +1,12 @@
 #include <R.h>
 #include <Rinternals.h>
+#include <limits.h>
 
 SEXP makeClosure(SEXP formals, SEXP body, SEXP env);
 void ensureNonDuplicateNames(SEXP plist);
 void ensureNotNamed(SEXP bd);
 SEXP get_new_args(SEXP e);
-static const int TWO_DOTS_ = 65535;
+static const int TWO_DOTS_ = INT_MIN;
 
 SEXP C_f(SEXP env, SEXP rho) {
   SEXP dots = findVarInFrame(env, R_DotsSymbol);
@@ -16,7 +17,7 @@ SEXP C_f(SEXP env, SEXP rho) {
   Rprintf("missing? %d \n", dots == R_MissingArg);
   Rprintf("\n");
   */
-  
+
   R_len_t len = length(dots);
 
   if (dots == R_MissingArg) { // Nothing is passed
@@ -108,9 +109,7 @@ SEXP C_double_tilda(SEXP env, SEXP rho) {
     dots_sym = list5(install("..1"), install("..2"), install("..3"), install("..4"), install("..5"));
   }
   
-  for (int i = 0; 
-       a != R_NilValue || s != R_NilValue || i < len;
-       a = CDR(a), s = CDR(s), i++) {
+  for (int i = 0; i < len; a = CDR(a), s = CDR(s), i++) {
     
     SET_TAG(a, elt(args_newsym, i));
     SETCAR(a, R_MissingArg);
@@ -173,7 +172,7 @@ int ddValMod(SEXP symbol)
     }
   }
   
-  return -1;
+  return 0;
 }
 
 void set_dd_bit(SEXP s, unsigned int *dd_bit) {
@@ -182,8 +181,8 @@ void set_dd_bit(SEXP s, unsigned int *dd_bit) {
   switch(TYPEOF(s)) {
   case SYMSXP:
     dd_val = ddValMod(s);
-    if ( dd_val == TWO_DOTS_) {
-      *dd_bit = dd_val;
+    if (dd_val == TWO_DOTS_) {
+      *dd_bit |= dd_val;
     } else if (dd_val > 0) {
       *dd_bit |= ((unsigned int)1 << (dd_val - 1));
     }  
@@ -218,6 +217,7 @@ SEXP get_new_args(SEXP e) {
     created = 1;
   }
   
+  // Rprintf("dd_bit is %d\n", dd_bit);
   switch(dd_bit) {
     case  0: return R_NilValue;
     case  1: return arg1;
@@ -225,7 +225,7 @@ SEXP get_new_args(SEXP e) {
     case  7: return arg3;
     case 15: return arg4;
     case 31: return arg5;
-    case 65535: return two_dots; // TWO_DOTS_
+    case INT_MIN: return two_dots; // TWO_DOTS_
     default: 
         error(
         "\nTail-prefix number of placeholders must be in order and"
@@ -234,4 +234,3 @@ SEXP get_new_args(SEXP e) {
         );
   }
 }
-
