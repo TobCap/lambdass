@@ -4,10 +4,11 @@
 SEXP makeClosure(SEXP formals, SEXP body, SEXP env);
 void ensureNonDuplicateNames(SEXP plist);
 void ensureNotNamed(SEXP bd);
+SEXP get_new_args(SEXP e);
+static const int TWO_DOTS_ = 65535;
 
 SEXP C_f(SEXP env, SEXP rho) {
   SEXP dots = findVarInFrame(env, R_DotsSymbol);
-
   /*
   Rprintf("type %s \n", type2char(TYPEOF(dots)));
   Rprintf("TAG %s \n", TAG(dots) == R_NilValue ? "Nil" : CHAR(PRINTNAME((TAG(dots)))));
@@ -15,8 +16,8 @@ SEXP C_f(SEXP env, SEXP rho) {
   Rprintf("missing? %d \n", dots == R_MissingArg);
   Rprintf("\n");
   */
-
-  int len = length(dots);
+  
+  R_len_t len = length(dots);
 
   if (dots == R_MissingArg) { // Nothing is passed
     return makeClosure(R_NilValue, R_NilValue, rho);
@@ -58,6 +59,80 @@ SEXP C_f(SEXP env, SEXP rho) {
   return makeClosure(ansp, body, rho);
 }
 
+SEXP C_double_tilda(SEXP env, SEXP rho) {
+  SEXP e1, e2;
+  e1 = findVarInFrame(env, install("e1"));
+  e2 = findVarInFrame(env, install("e2"));
+  
+  SEXP e1_expr, e2_expr;
+  PROTECT(e1_expr = PREXPR(e1));
+  PROTECT(e2_expr = PREXPR(e2));
+
+  // `TYPEOF(e2) == PROMSXP` means e2 is not R_MissingArg
+  if (TYPEOF(e2) == PROMSXP || length(e1_expr) != 2 ||  CAR(e1_expr) != install("~")) {
+    SEXP ans, klass;
+    if (TYPEOF(e2) == PROMSXP) {
+      PROTECT(ans = lang3(install("~"), e1_expr, e2_expr));
+    } else {
+      PROTECT(ans = lang2(install("~"), e1_expr));  
+    }
+    
+    PROTECT(klass = mkString("formula"));
+    setAttrib(ans, R_ClassSymbol, klass);
+    setAttrib(ans, install(".Environment"), rho);
+    UNPROTECT(4);
+    return ans;
+  }
+  
+  SEXP expr;
+  PROTECT(expr = CDR(e1_expr)); // LISTSXP
+  SET_TYPEOF(expr, LANGSXP); // substitute() only accept LANGSXP
+  
+  // Rprintf("type %s \n", type2char(TYPEOF(expr)));
+  
+  SEXP args_newsym;
+  args_newsym = get_new_args(expr);
+  R_xlen_t len = length(args_newsym);
+  
+  if (len == 1 && args_newsym == install("..")) {
+    SEXP arg_d = CONS(args_newsym, R_NilValue);
+    return makeClosure(arg_d, expr, rho);
+  }
+  
+  SEXP args_list, substi_list, a, s;
+  PROTECT(args_list = a =  allocList(len));
+  PROTECT(substi_list = s = allocList(len));
+  
+  static SEXP dots_sym;
+  if (dots_sym == NULL) {
+    dots_sym = list5(install("..1"), install("..2"), install("..3"), install("..4"), install("..5"));
+  }
+  
+  for (int i = 0; 
+       a != R_NilValue || s != R_NilValue || i < len;
+       a = CDR(a), s = CDR(s), i++) {
+    
+    SET_TAG(a, elt(args_newsym, i));
+    SETCAR(a, R_MissingArg);
+    
+    SET_TAG(s, elt(dots_sym, i));
+    SETCAR(s, elt(args_newsym, i));
+  }
+  
+  //SEXP env2 = NewEnvironment(R_NilValue, duplicate(substi_list), R_BaseEnv);
+  SEXP env2;
+  PROTECT(env2= allocSExp(ENVSXP));
+  SET_FRAME(env2, substi_list);
+  SET_ENCLOS(env2, R_EmptyEnv);
+  
+  SEXP ans_body;
+  PROTECT(ans_body= CAR(substitute(expr, env2))); // need CAR to strip top level LANGSXP
+  
+  UNPROTECT(7);
+  
+  return makeClosure(args_list, ans_body, rho);
+}
+
 SEXP makeClosure(SEXP formals, SEXP body, SEXP env) {
   SEXP cl = PROTECT(allocSExp(CLOSXP));
 
@@ -83,3 +158,80 @@ void ensureNotNamed(SEXP bd) {
   if (TAG(bd) != R_NilValue)
     error("the last element should not be named");
 }
+
+int ddValMod(SEXP symbol)
+{
+  char *endp;
+  const char *buf = CHAR(PRINTNAME(symbol));
+  
+  if( !strncmp(buf, "..", 2) ) {
+    if (strlen(buf) == 2) {
+      return TWO_DOTS_; // used get_new_args 
+    } else {
+      buf += 2;
+      return (int) strtol(buf, &endp, 10);
+    }
+  }
+  
+  return -1;
+}
+
+void set_dd_bit(SEXP s, unsigned int *dd_bit) {
+  int dd_val;
+  
+  switch(TYPEOF(s)) {
+  case SYMSXP:
+    dd_val = ddValMod(s);
+    if ( dd_val == TWO_DOTS_) {
+      *dd_bit = dd_val;
+    } else if (dd_val > 0) {
+      *dd_bit |= ((unsigned int)1 << (dd_val - 1));
+    }  
+    break;
+  case LANGSXP:
+  case LISTSXP:
+    while(s != R_NilValue) {
+      set_dd_bit(CAR(s), dd_bit);
+      s = CDR(s);
+    }
+    break;
+  default:
+    break;
+  }
+}
+
+SEXP get_new_args(SEXP e) {
+  
+  unsigned int dd_bit;
+  set_dd_bit(e, &dd_bit);
+  
+  static int created;
+  static SEXP arg1, arg2, arg3, arg4, arg5, two_dots;
+  
+  if (created == 0) {
+    two_dots = list1(install(".."));
+    arg1 = list1(install("._1"));
+    arg2 = list2(install("._1"), install("._2"));
+    arg3 = list3(install("._1"), install("._2"), install("._3"));
+    arg4 = list4(install("._1"), install("._2"), install("._3"), install("._4"));
+    arg5 = list5(install("._1"), install("._2"), install("._3"), install("._4"), install("._5"));  
+    created = 1;
+  }
+  
+  switch(dd_bit) {
+    case  0: return R_NilValue;
+    case  1: return arg1;
+    case  3: return arg2;
+    case  7: return arg3;
+    case 15: return arg4;
+    case 31: return arg5;
+    case 65535: return two_dots; // TWO_DOTS_
+    default: 
+        error(
+        "\nTail-prefix number of placeholders must be in order and"
+        "\nthe number of arguments is limitted to five"
+        "\n"
+        );
+  }
+}
+

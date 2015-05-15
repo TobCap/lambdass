@@ -1,26 +1,25 @@
 #' Syntax sugar of making an anonymous function
 #'
-#' Tilda is a very useful symbol because rest parts are not evaluated.
-#' In normal R usage, it is used to create a formula object as inner-DSL.
+#' Tilda is a R's "Primitive Function" that does not evaluate its argument, and
+#' it is normally used to create a formula object as an inner-DSL role.
 #' I hijack this functionality to make an anounymous function.
-#' Double tilda and its posterior parts with a symbol of `..` make
-#' an anonymous function whose formal parameter is converted from `..` to
-#' an arbitrary non-overlapping symbol (mimic LISP's gensym).
-#' If you want to make an anoymous function which has two or more arguments,
+#' Double tilda with a two-dots symbol, \code{..}, make an anonymous function
+#' in which two-dots plays a placeholder. If you need two or more arguments,
 #' the placeholde should be \code{..1}, \code{..2}, and so on. See examples.
-#' Single tilda works as if it is normaly used but it takes a bit calulation process.
+#' Single tilda works as if it is normaly used but it takes a bit calulation 
+#' process, and not fully tested.
 #'
 #' @details Unsupported nested lambda.
 #' \code{function(x) function(y) x + y} cannot define by double-tilda.
 #' Use \code{f.} and type this; \code{f.(x, f.(y, x + y))}
-#' @param ... expression starts with \code{~~}
-#' @param env_ environment where \code{...} is evaluated
+#' @param e1,e2 The original-tilda is both unary and binary function. 
+#' if \code{e2} is missing and \code{e1}'s first call object is \code{~},
+#' then anonymous function is made.
 #' @name double-tilda
+#' @useDynLib lambdass C_double_tilda
 #' @examples
-#' # `x`, `x1`, and `x2` are bound variables, does not matter if
-#' # they are shown in other symbols.
-#' ~~ .. + 1 # => function(x) x + 1
-#' ~~ ..1 + ..2 # => function(x1, x2) x1 + x2
+#' ~~ .. + 1 # => function(..) .. + 1
+#' ~~ ..1 + ..2 # => function(._1, ._2) ._1 + ._2
 #'
 #' Reduce(~~ ..1 + ..2, 1:10)
 #' Filter(~~ .. %% 3 == 0, 1:10)
@@ -33,13 +32,15 @@ NULL
 
 #' @rdname double-tilda
 #' @export
-`~` <- function(..., env_ = parent.frame()) {
+`~` <- function(e1, e2) {
+  env_ = parent.frame()
+  return(.Call(C_double_tilda, environment(), env_))
 
-  dots <- as.list.default(substitute((...)))[-1]
-  if (length(dots) != 1 || length(dots[[1]]) == 1 || dots[[1]][[1]] != "~")
-    return(as.formula(deparse(as.call(c(quote(`~`), dots))), env_))
+  e1_expr <- substitute(e1)
+  if (!missing(e2) || length(e1_expr) != 2 || e1_expr[[1]] != "~")
+    return(as.formula(as.call(c(quote(`~`), e1_expr)), env_))
 
-  expr <- dots[[1]][[2]]
+  expr <- e1_expr[[2]]
 
   all_vars <- all.names(expr, functions = FALSE, unique = TRUE)
   args_char <- sort.default(all_vars[grep("^..$|^..[0-9]+$", all_vars)])
