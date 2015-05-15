@@ -8,20 +8,19 @@
 "~"(e1, e2)
 }
 \arguments{
-\item{e1,e2}{The original-tilda is both unary and binary function. if \code{e2}
-is missing and \code{e1}'s first call object is \code{~}, then anonymous function
-is made.}
+\item{e1,e2}{The original-tilda is both unary and binary function.
+if \code{e2} is missing and \code{e1}'s first call object is \code{~},
+then anonymous function is made.}
 }
 \description{
-Tilda is a very useful symbol because rest parts are not evaluated.
-In normal R usage, it is used to create a formula object as inner-DSL.
+Tilda is a R's "Primitive Function" that does not evaluate its argument, and
+it is normally used to create a formula object as an inner-DSL role.
 I hijack this functionality to make an anounymous function.
-Double tilda and its posterior parts with a symbol of `..` make
-an anonymous function whose formal parameter is converted from `..` to
-an arbitrary non-overlapping symbol (mimic LISP's gensym).
-If you want to make an anoymous function which has two or more arguments,
+Double tilda with a two-dots symbol, \code{..}, make an anonymous function
+in which two-dots plays a placeholder. If you need two or more arguments,
 the placeholde should be \code{..1}, \code{..2}, and so on. See examples.
-Single tilda works as if it is normaly used but it takes a bit calulation process.
+Single tilda works as if it is normaly used but it takes a bit calulation
+process, and not fully tested.
 }
 \details{
 Unsupported nested lambda.
@@ -29,10 +28,8 @@ Unsupported nested lambda.
 Use \code{f.} and type this; \code{f.(x, f.(y, x + y))}
 }
 \examples{
-# \\code{x}, \\code{x1}, and \\code{x2} are bound variables, does not matter if
-# they are shown in other symbols.
-~~ .. + 1 # => function(x) x + 1
-~~ ..1 + ..2 # => function(x1, x2) x1 + x2
+~~ .. + 1 # => function(..) .. + 1
+~~ ..1 + ..2 # => function(._1, ._2) ._1 + ._2
 
 Reduce(~~ ..1 + ..2, 1:10)
 Filter(~~ .. \%\% 3 == 0, 1:10)
