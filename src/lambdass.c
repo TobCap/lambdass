@@ -6,7 +6,7 @@ SEXP makeClosure(SEXP formals, SEXP body, SEXP env);
 void ensureNonDuplicateNames(SEXP plist);
 void ensureNotNamed(SEXP bd);
 SEXP get_new_args(SEXP e);
-static const int TWO_DOTS_ = INT_MIN;
+const int TWO_DOTS_ = INT_MIN;
 
 SEXP C_f(SEXP env, SEXP rho) {
   SEXP dots = findVarInFrame(env, R_DotsSymbol);
@@ -68,21 +68,21 @@ SEXP C_double_tilda(SEXP env, SEXP rho) {
   SEXP e1_expr, e2_expr;
   PROTECT(e1_expr = PREXPR(e1));
   PROTECT(e2_expr = PREXPR(e2));
-
+  
   // `TYPEOF(e2) == PROMSXP` means e2 is not R_MissingArg
   if (TYPEOF(e2) == PROMSXP || length(e1_expr) != 2 ||  CAR(e1_expr) != install("~")) {
     SEXP ans, klass;
     
-    if (TYPEOF(e2) == PROMSXP) {
+    if (TYPEOF(e2) == PROMSXP)
       PROTECT(ans = lang3(install("~"), e1_expr, e2_expr));
-    } else {
-      PROTECT(ans = lang2(install("~"), e1_expr));  
-    }
+    else
+      PROTECT(ans = lang2(install("~"), e1_expr));
     
     PROTECT(klass = mkString("formula"));
     setAttrib(ans, R_ClassSymbol, klass);
     setAttrib(ans, install(".Environment"), rho);
     UNPROTECT(6);
+    
     return ans;
   }
   
@@ -95,7 +95,7 @@ SEXP C_double_tilda(SEXP env, SEXP rho) {
   SEXP args_newsym, an;
   PROTECT(args_newsym = an = get_new_args(expr));
   R_xlen_t len = length(args_newsym);
-  
+    
   if (len == 1 && CAR(args_newsym) == install("..")) {
     //Rprintf(".. is called\n");
     SEXP arg_dot;
@@ -111,29 +111,14 @@ SEXP C_double_tilda(SEXP env, SEXP rho) {
   PROTECT(args_list = a = allocList(len));
   PROTECT(substi_list = s = allocList(len));
   
-  /*
-  static SEXP dots_sym;
-  if (dots_sym == NULL) {
-    dots_sym = list5(install("..1"), install("..2"), install("..3"), install("..4"), install("..5"));
-  }
-  */
+  SEXP dots_syms, ds;
+  PROTECT(dots_syms = ds = list5(install("..1"), install("..2"), install("..3"), install("..4"), install("..5")));
   
-  static SEXP dots_syms[5];
-  if (dots_syms[0] == NULL) {
-    //Rprintf("initialized dots_syms\n");
-    dots_syms[0] = install("..1");
-    dots_syms[1] = install("..2");
-    dots_syms[2] = install("..3");
-    dots_syms[3] = install("..4");
-    dots_syms[4] = install("..5");
-  }
-  
-  for (int i = 0; i < len; a = CDR(a), s = CDR(s), an = CDR(an), i++) {
-    
+  for (int i = 0; i < len; a = CDR(a), s = CDR(s), an = CDR(an), ds = CDR(ds), i++) {
     SET_TAG(a, CAR(an));
     SETCAR(a, R_MissingArg);
     
-    SET_TAG(s, dots_syms[i]);
+    SET_TAG(s, CAR(ds));
     SETCAR(s, CAR(an));
   }
   
@@ -144,20 +129,21 @@ SEXP C_double_tilda(SEXP env, SEXP rho) {
   SET_ENCLOS(env2, R_EmptyEnv);
   
   SEXP ans_body;
-  PROTECT(ans_body= CAR(substitute(expr, env2))); // need CAR to strip top level LANGSXP
+  PROTECT(ans_body = CAR(substitute(expr, env2))); // need CAR to strip top level LANGSXP
   
-  UNPROTECT(10);
+  UNPROTECT(11);
   
   return makeClosure(args_list, ans_body, rho);
 }
 
 SEXP makeClosure(SEXP formals, SEXP body, SEXP env) {
-  SEXP cl = PROTECT(allocSExp(CLOSXP));
+  SEXP cl;
+  PROTECT(cl = allocSExp(CLOSXP));
 
   // non-checking version of mkCLOSXP in "dstruct.c"
   // I'm not sure whether PROTECT() is required or not for formals, body, and env.
   // https://github.com/wch/r-source/blob/ed415a8431b32e079100f50a846e4769aeb54d5a/src/main/dstruct.c#L81-L83
-
+  
   SET_FORMALS(cl, formals);
   SET_BODY(cl, body);
   SET_CLOENV(cl, env);
@@ -194,8 +180,8 @@ int ddValMod(SEXP symbol)
   return 0;
 }
 
-void set_dd_bit(SEXP s, unsigned int *dd_bit) {
-  int dd_val;
+void set_dd_bit(SEXP s, int *dd_bit) {
+  int dd_val = 0;
   
   switch(TYPEOF(s)) {
   case SYMSXP:
@@ -220,36 +206,23 @@ void set_dd_bit(SEXP s, unsigned int *dd_bit) {
 
 SEXP get_new_args(SEXP e) {
   
-  unsigned int dd_bit;
+  int dd_bit = 0;
   set_dd_bit(e, &dd_bit);
   
-  static int created;
-  static SEXP arg1, arg2, arg3, arg4, arg5, two_dots;
-  
-  if (created == 0) {
-    two_dots = list1(install(".."));
-    arg1 = list1(install("._1"));
-    arg2 = list2(install("._1"), install("._2"));
-    arg3 = list3(install("._1"), install("._2"), install("._3"));
-    arg4 = list4(install("._1"), install("._2"), install("._3"), install("._4"));
-    arg5 = list5(install("._1"), install("._2"), install("._3"), install("._4"), install("._5"));  
-    created = 1;
-  }
-  
-  // Rprintf("dd_bit is %d\n", dd_bit);
+  //Rprintf("dd_bit is %d\n", dd_bit);
   switch(dd_bit) {
-    case  0: return R_NilValue;
-    case  1: return arg1;
-    case  3: return arg2;
-    case  7: return arg3;
-    case 15: return arg4;
-    case 31: return arg5;
-    case INT_MIN: return two_dots; // TWO_DOTS_
-    default: 
-        error(
-        "\nTail-prefix number of placeholders must be in order and"
-        "\nthe number of arguments is limitted to five"
-        "\n"
-        );
+  case  0: return R_NilValue;
+  case  1: return list1(install("._1"));
+  case  3: return list2(install("._1"), install("._2"));
+  case  7: return list3(install("._1"), install("._2"), install("._3"));
+  case 15: return list4(install("._1"), install("._2"), install("._3"), install("._4"));
+  case 31: return list5(install("._1"), install("._2"), install("._3"), install("._4"), install("._5"));
+  case INT_MIN: return list1(install(".."));
+  default: 
+    error(
+    "\nTail-prefix number of placeholders must be in order and"
+    "\nthe number of arguments is limitted to five"
+    "\n"
+    );
   }
 }
