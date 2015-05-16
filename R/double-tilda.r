@@ -1,9 +1,9 @@
-#' Syntax sugar of making an anonymous function
+#' syntax sugar of making an anonymous function
 #'
 #' Tilda is a R's "Primitive Function" that does not evaluate its argument, and
 #' it is normally used to create a formula object as an inner-DSL role.
 #' I hijack this functionality to make an anounymous function.
-#' Double tilda with a two-dots symbol, \code{..}, make an anonymous function
+#' Double-tilda with a two-dots symbol, \code{..}, makes an anonymous function
 #' in which two-dots plays a placeholder. If you need two or more arguments,
 #' the placeholde should be \code{..1}, \code{..2}, and so on. See examples.
 #' Single tilda works as if it is normaly used but it takes a bit calulation 
