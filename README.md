@@ -99,20 +99,39 @@ f(x:character, y = "") %->% {paste0(x, y)}
 ## Benchmarking
 ``` r
 ## note that it's nanoseconds
-> microbenchmark::microbenchmark(
-  "f." = f.(x, x), 
-  "~~" = ~~ ..,
-  "%->%" = x %->% x, 
-  "as.function" = as.function(alist(x=, x)),
-  "function(x) x" = function(x) x
-  )
-Unit: nanoseconds
-          expr   min     lq      mean   median       uq    max neval
-            f.  5350   6687   7761.91   8025.0   8471.0  12037   100
-            ~~ 11145  12260  14479.95  13375.0  15157.0  77568   100
-          %->% 96737 100303 106864.93 104760.5 106989.5 286642   100
-   as.function 32543  35664  39582.30  38339.0  42796.0  93616   100
- function(x) x     0    446    544.62    447.0    892.0   1339   100
+microbenchmark::microbenchmark(
+   "f." = f.(x, x), 
+   "~~" = ~~ ..,
+   "%->%" = {x} %->% {x},
+   "as.function" = as.function(alist(x=, x)),
+   "as.function.default" = as.function.default(alist(x=, x)),
+   "function(x) x" = function(x) x
+)
+# Unit: nanoseconds
+#                 expr    min       lq      mean   median     uq    max neval
+#                   f.   5350   6687.5   8073.96   8025.0   8916  34326   100
+#                   ~~  10699  12037.0  13704.19  13374.0  14712  28977   100
+#                 %->% 138194 141983.5 160380.99 145772.5 170514 324978   100
+#          as.function  32543  33881.0  41360.74  36110.0  40567 188122   100
+#  as.function.default  22736  24295.5  27447.78  26302.0  29423  66869   100
+#        function(x) x      0    446.0    910.25    447.0    892  38338   100
+
+microbenchmark::microbenchmark(
+   "f." = f.(x, y, x + y), 
+   "~~" =  ~~ ..1 + ..2,
+   "%->%" = f(x, y) %->% {x + y},
+   "as.function" = as.function(alist(x=, y=, x + y)),
+   "as.function.default" = as.function(alist(x=, y=, x + y)),
+   "function(x) x" = function(x, y) x + y
+)
+# Unit: nanoseconds
+#                 expr    min       lq      mean   median       uq    max neval
+#                   f.   5796   7579.0   8457.39   8247.5   8917.0  19170   100
+#                   ~~  13820  16049.0  18251.22  18278.0  19170.0  41459   100
+#                 %->% 114121 119026.0 127205.62 121254.0 125043.5 284412   100
+#          as.function  32543  34772.0  40210.61  39229.5  43242.0  73556   100
+#  as.function.default  32543  34549.5  40482.58  37001.0  42350.0 157364   100
+#        function(x) x      0    446.0    557.97    447.0    447.0   3567   100
 ```
 
 ## Church Encoding
