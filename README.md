@@ -59,11 +59,16 @@ microbenchmark::microbenchmark(
 
 ### double-tilda
 ``` r
-# double-tilda with dotted placeholder like the usage of underscore in scala's lambda
+# double-tilda with dotted placeholder like the usage of an underscore in scala's lambda
+# or a hash-tag in Mathematica's Pure Function.
+# 
+# http://www.scala-lang.org/files/archive/spec/2.11/06-expressions.html#placeholder-syntax-for-anonymous-functions
+# http://reference.wolfram.com/language/howto/WorkWithPureFunctions.html
+# 
 # A bounded vairable can be specified by tow-dots placeholder.
 # Two or more variables can be designated by ..1, ..2, and so on.
 ~~ .. + 1
-~~ ..1 * (..1 + ..2)
+~~ ..2 / ..1
 # cannot define curried-function such as `function(x) function(y) x + y`
 
 Map(~~ .. ^ 2, 1:10)
@@ -121,17 +126,17 @@ microbenchmark::microbenchmark(
    "~~" =  ~~ ..1 + ..2,
    "%->%" = f(x, y) %->% {x + y},
    "as.function" = as.function(alist(x=, y=, x + y)),
-   "as.function.default" = as.function(alist(x=, y=, x + y)),
-   "function(x) x" = function(x, y) x + y
+   "as.function.default" = as.function.default(alist(x=, y=, x + y)),
+   "function(x, y) x+y" = function(x, y) x + y
 )
 # Unit: nanoseconds
-#                 expr    min       lq      mean   median       uq    max neval
-#                   f.   5796   7579.0   8457.39   8247.5   8917.0  19170   100
-#                   ~~  13820  16049.0  18251.22  18278.0  19170.0  41459   100
-#                 %->% 114121 119026.0 127205.62 121254.0 125043.5 284412   100
-#          as.function  32543  34772.0  40210.61  39229.5  43242.0  73556   100
-#  as.function.default  32543  34549.5  40482.58  37001.0  42350.0 157364   100
-#        function(x) x      0    446.0    557.97    447.0    447.0   3567   100
+#                 expr    min     lq      mean   median       uq    max neval
+#                   f.   6241   7134   8947.70   8471.0   9362.5  20507   100
+#                   ~~  13374  14712  19263.05  18724.0  20506.0  98965   100
+#                 %->% 113676 119916 131948.24 122814.5 128163.0 327652   100
+#          as.function  33434  35663  41761.75  39006.5  44133.0  74001   100
+#  as.function.default  23627  25411  30964.91  27639.0  32766.0  73109   100
+#   function(x, y) x+y      0    446    602.64    447.0    892.0   4904   100
 ```
 
 ## Church Encoding
