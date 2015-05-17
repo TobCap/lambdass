@@ -2,11 +2,12 @@
 #include <Rinternals.h>
 #include <limits.h>
 
+#define TWO_DOTS_ID  INT_MIN
+
 SEXP makeClosure(SEXP formals, SEXP body, SEXP env);
 void ensureNonDuplicateNames(SEXP plist);
 void ensureNotNamed(SEXP bd);
 SEXP get_new_args(SEXP e);
-const int TWO_DOTS_ = INT_MIN;
 
 SEXP C_f(SEXP env, SEXP rho) {
   SEXP dots = findVarInFrame(env, R_DotsSymbol);
@@ -217,7 +218,7 @@ SEXP get_new_args(SEXP e) {
   case  7: return list3(install("._1"), install("._2"), install("._3"));
   case 15: return list4(install("._1"), install("._2"), install("._3"), install("._4"));
   case 31: return list5(install("._1"), install("._2"), install("._3"), install("._4"), install("._5"));
-  case INT_MIN: return list1(install(".."));
+  case TWO_DOTS_ID: return list1(install(".."));
   default: 
     error(
     "\nTail-prefix number of placeholders must be in order and"
