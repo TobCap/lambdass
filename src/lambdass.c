@@ -33,37 +33,37 @@ SEXP C_f(SEXP env, SEXP rho)
 
   // the idea comes from asFunction() defined in R source code.
   // https://github.com/wch/r-source/blob/565868293e1s25eb1a4f68fa149e2d24963edf781/src/main/coerce.c#L1275
-  SEXP formal, pformal, body;
-  PROTECT(formal = pformal = allocList(len - 1));
+  SEXP formal, p_formal, body;
+  PROTECT(formal = p_formal = allocList(len - 1));
   
   while (--len) {
     SEXP expr = PREXPR(CAR(dots));
     if (TAG(dots) == R_NilValue) {
       if (TYPEOF(expr) != SYMSXP)
-        error("argument must be pa symbol or `Name=Value` style");
+        error("argument must be a symbol or `Name=Value` style");
       
-      SETCAR(formal, R_MissingArg);
-      SET_TAG(formal, expr);
+      SETCAR(p_formal, R_MissingArg);
+      SET_TAG(p_formal, expr);
       
     } else {
       if (expr == R_MissingArg)
-        error("argument must be pa symbol or `Name=Value` style");
+        error("argument must be a symbol or `Name=Value` style");
       
-      SETCAR(formal, expr);
-      SET_TAG(formal, TAG(dots));
+      SETCAR(p_formal, expr);
+      SET_TAG(p_formal, TAG(dots));
       
     }
-    formal = CDR(formal);
+    p_formal = CDR(p_formal);
     dots = CDR(dots);
   }
 
   body = PREXPR(CAR(dots)); // last element
 
   ensureNotNamed(dots);
-  ensureNonDuplicateNames(pformal);
+  ensureNonDuplicateNames(formal);
 
   UNPROTECT(1);
-  return makeClosure(pformal, body, rho);
+  return makeClosure(formal, body, rho);
 }
 
 SEXP C_double_tilda(SEXP env, SEXP rho)
@@ -99,8 +99,8 @@ SEXP C_double_tilda(SEXP env, SEXP rho)
   
   // Rprintf("type %s \n", type2char(TYPEOF(expr)));
   
-  SEXP alteredSyms, pan;
-  PROTECT(alteredSyms = pan = getAlteredSyms(expr));
+  SEXP alteredSyms;
+  PROTECT(alteredSyms = getAlteredSyms(expr));
   R_xlen_t len = length(alteredSyms);
     
   if (len == 1 && CAR(alteredSyms) == install("..")) {
@@ -114,19 +114,21 @@ SEXP C_double_tilda(SEXP env, SEXP rho)
     return makeClosure(arg_dot, CAR(expr), rho);
   }
   
-  SEXP ansFormals, substiList, pa, ps;
-  PROTECT(ansFormals = pa = allocList(len));
-  PROTECT(substiList = ps = allocList(len));
+  SEXP ansFormals, substiList, dots5List;
+  PROTECT(ansFormals = allocList(len));
+  PROTECT(substiList = allocList(len));
+  PROTECT(dots5List = list5(install("..1"), install("..2"), install("..3"), install("..4"), install("..5")));
   
-  SEXP dotsSyms, pds;
-  PROTECT(dotsSyms = pds = list5(install("..1"), install("..2"), install("..3"), install("..4"), install("..5")));
-  
-  for (int i = 0; i < len; pa = CDR(pa), ps = CDR(ps), pan = CDR(pan), pds = CDR(pds), i++) {
-    SET_TAG(pa, CAR(pan));
-    SETCAR(pa, R_MissingArg);
+  int i = 0;
+  for (SEXP p_ansFormals = ansFormals, p_substiList = substiList ; i < len;
+       p_ansFormals = CDR(p_ansFormals), p_substiList = CDR(p_substiList),
+       alteredSyms = CDR(alteredSyms), dots5List = CDR(dots5List), i++) {
     
-    SET_TAG(ps, CAR(pds));
-    SETCAR(ps, CAR(pan));
+    SET_TAG(p_ansFormals, CAR(alteredSyms));
+    SETCAR(p_ansFormals, R_MissingArg);
+    
+    SET_TAG(p_substiList, CAR(dots5List));
+    SETCAR(p_substiList, CAR(alteredSyms));
   }
   
   //SEXP env2 = NewEnvironment(R_NilValue, duplicate(substiList), R_BaseEnv);
