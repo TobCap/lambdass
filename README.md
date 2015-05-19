@@ -1,4 +1,4 @@
-# lambda Syntax-sugar (lambdass)
+# lambda syntax-sugar (lambdass)
 
 ## What is this package?
 The purpose of this package is to provide you with easy syntax for making anonymous
@@ -13,6 +13,7 @@ function.
 
 ## Installation
 ``` r
+# install.packages("devtools")
 devtools::install_github("tobcap/lambdass")
 ## if you want this package to be compiled,
 # devtools::install_github("tobcap/lambdass", args = "--byte-compile")
@@ -42,8 +43,8 @@ Reduce(f.(x, y, x + y), 1:10)
 ```
 
 ``` r
-## f.() is reorganized by C-lang.
-## Original code is written in R. See f.r().
+## f.() is now implemented by C.
+## The original code is defined by f.r().
 identical(f.(x, y, x + y), f.r(x, y, x + y))
 
 ## about ten times speed-up
@@ -59,14 +60,15 @@ microbenchmark::microbenchmark(
 
 ### double-tilda
 ``` r
-# double-tilda with dotted placeholder like the usage of an underscore in scala's lambda
-# or a hash-tag in Mathematica's Pure Function.
-# 
+# double-tilda with dotted symbol placeholder makes an anonymous function
+# like the usage of `%` in Closure's lambda, `_` in scala's lambda, or `#`
+# in Mathematica's Pure Function.
+# http://en.wikibooks.org/wiki/Clojure_Programming/Examples/API_Examples/Function_Tools#.25
 # http://www.scala-lang.org/files/archive/spec/2.11/06-expressions.html#placeholder-syntax-for-anonymous-functions
 # http://reference.wolfram.com/language/howto/WorkWithPureFunctions.html
 # 
-# A bounded vairable can be specified by tow-dots placeholder.
-# Two or more variables can be designated by ..1, ..2, and so on.
+# A bounded vairable can be specified by .. which is synonym for ..1
+# Arguments can be designated by ..1, ..2, up to ..5.
 ~~ .. + 1
 ~~ ..2 / ..1
 # cannot define curried-function such as `function(x) function(y) x + y`
