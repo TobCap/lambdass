@@ -9,8 +9,8 @@
 }
 \arguments{
 \item{e1,e2}{The original-tilda is both unary and binary function.
-if \code{e2} is missing and \code{e1}'s first call object is \code{~},
-then anonymous function is made.}
+if \code{e2} is missing and the first call object of \code{e1} is \code{~}
+symbol itself, then an anonymous function is made.}
 }
 \description{
 Tilda is a R's "Primitive Function" that does not evaluate its argument, and
