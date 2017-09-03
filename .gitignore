@@ -5,3 +5,4 @@ src/*.o-*
 .Rproj.user
 .Rhistory
 inst/doc
+vignettes/.build.timestamp
