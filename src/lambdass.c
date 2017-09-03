@@ -224,13 +224,13 @@ SEXP getAlteredSyms(SEXP e)
   
   //Rprintf("ddBit is %d\n", ddBit);
   switch(ddBit) {
+  case TWO_DOTS_ID: return list1(install(".."));
   case  0: return R_NilValue;
   case  1: return list1(install("._1"));
   case  3: return list2(install("._1"), install("._2"));
   case  7: return list3(install("._1"), install("._2"), install("._3"));
   case 15: return list4(install("._1"), install("._2"), install("._3"), install("._4"));
   case 31: return list5(install("._1"), install("._2"), install("._3"), install("._4"), install("._5"));
-  case TWO_DOTS_ID: return list1(install(".."));
   default: 
     error(
     "\nTail-prefix number of placeholders must be in order and"
