@@ -1,21 +1,21 @@
 #' syntax sugar of making an anonymous function
 #'
-#' Tilda is a R's "Primitive Function" that does not evaluate its argument, and
+#' Tilde is a R's "Primitive Function" that does not evaluate its argument, and
 #' it is normally used to create a formula object as an inner-DSL role.
 #' I hijack this functionality to make an anounymous function.
-#' Double-tilda with a two-dots symbol, \code{..}, makes an anonymous function
+#' Double-tilde with a two-dots symbol, \code{..}, makes an anonymous function
 #' in which two-dots plays a placeholder. If you need two or more arguments,
 #' the placeholde should be \code{..1}, \code{..2}, and so on. See examples.
-#' Single tilda works as if it is normaly used but it takes a bit calulation 
+#' Single tilde works as if it is normaly used but it takes a bit calulation 
 #' process, and not fully tested.
 #'
 #' @details Unsupported nested lambda.
-#' \code{function(x) function(y) x + y} cannot define by double-tilda.
+#' \code{function(x) function(y) x + y} cannot define by double-tilde.
 #' Use \code{f.} and type this; \code{f.(x, f.(y, x + y))}
-#' @param e1,e2 The original-tilda is both unary and binary function. 
+#' @param e1,e2 The original-tilde is both unary and binary function. 
 #' if \code{e2} is missing and the first call object of \code{e1} is \code{~} 
 #' symbol itself, then an anonymous function is made.
-#' @name double-tilda
+#' @name double-tilde
 #' @useDynLib lambdass C_double_tilda
 #' @examples
 #' ~~ .. + 1 # => function(..) .. + 1
@@ -24,18 +24,22 @@
 #' Reduce(~~ ..1 + ..2, 1:10)
 #' Filter(~~ .. %% 3 == 0, 1:10)
 #' 
-#' # The tilda's role remains.
+#' # The tilde's role remains.
 #' ~ speed + dist
 #' lm(speed ~ dist, data = cars)
 #' lm(mpg ~ ., data = mtcars)
 NULL
 
-#' @rdname double-tilda
+#' 
+#' @importFrom methods substituteDirect
+#' @importFrom stats as.formula setNames
+#' @rdname double-tilde
 #' @export
 `~` <- function(e1, e2) {
   env_ = parent.frame()
   return(.Call(C_double_tilda, environment(), env_))
 
+  "not used below"
   e1_expr <- substitute(e1)
   if (!missing(e2) || length(e1_expr) != 2 || e1_expr[[1]] != "~")
     return(as.formula(as.call(c(quote(`~`), e1_expr)), env_))
