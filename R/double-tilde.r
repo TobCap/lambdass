@@ -16,7 +16,7 @@
 #' if \code{e2} is missing and the first call object of \code{e1} is \code{~} 
 #' symbol itself, then an anonymous function is made.
 #' @name double-tilde
-#' @useDynLib lambdass C_double_tilda
+#' @useDynLib lambdass C_double_tilde
 #' @examples
 #' ~~ .. + 1 # => function(..) .. + 1
 #' ~~ ..1 + ..2 # => function(._1, ._2) ._1 + ._2
@@ -37,7 +37,7 @@ NULL
 #' @export
 `~` <- function(e1, e2) {
   env_ = parent.frame()
-  return(.Call(C_double_tilda, environment(), env_))
+  return(.Call(C_double_tilde, environment(), env_))
 
   "not used below"
   e1_expr <- substitute(e1)
