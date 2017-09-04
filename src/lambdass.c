@@ -3,12 +3,13 @@
 #include <limits.h>
 
 #define TWO_DOTS_ID  INT_MIN
+#define NEW_SYM_PREFIX "._"
 
+SEXP makeClosureForTilde(SEXP rhs, SEXP env);
 SEXP makeClosure(SEXP formals, SEXP body, SEXP env);
 void ensureNonDuplicateNames(SEXP plist);
 void ensureNotNamed(SEXP bd);
-SEXP getAlteredSyms(SEXP e);
-
+SEXP getNewDdBody(SEXP expr, int *ddBit);
 
 SEXP C_f(SEXP env, SEXP rho)
 {
@@ -66,7 +67,21 @@ SEXP C_f(SEXP env, SEXP rho)
   return makeClosure(formal, body, rho);
 }
 
-SEXP C_double_tilda(SEXP env, SEXP rho)
+void ensureNonDuplicateNames(SEXP plist)
+{
+  SEXP names = getAttrib(plist, R_NamesSymbol);
+
+  if (any_duplicated(names, 0))
+    error("arguments must have unique name");
+}
+
+void ensureNotNamed(SEXP bd)
+{
+  if (TAG(bd) != R_NilValue)
+    error("the last element should not be named");
+}
+
+SEXP C_double_tilde(SEXP env, SEXP rho)
 {
   SEXP e1, e2;
   PROTECT(e1 = findVarInFrame(env, install("e1")));
@@ -76,6 +91,7 @@ SEXP C_double_tilda(SEXP env, SEXP rho)
   PROTECT(e1_expr = PREXPR(e1));
   PROTECT(e2_expr = PREXPR(e2));
   
+  // For single tilde, create R's a normal formula
   // `TYPEOF(e2) == PROMSXP` means e2 is not R_MissingArg just like 'speed ~ dist'
   if (TYPEOF(e2) == PROMSXP || CAR(e1_expr) != install("~")) {
     SEXP ans, klass;
@@ -92,57 +108,70 @@ SEXP C_double_tilda(SEXP env, SEXP rho)
     
     return ans;
   }
-  
+  // e1_expr is `~ somthing`, needs CDR(.) to remove `~`
   SEXP expr;
   PROTECT(expr = CDR(e1_expr)); // LISTSXP
-  SET_TYPEOF(expr, LANGSXP); // substitute() only accepts LANGSXP
+  SET_TYPEOF(expr, LANGSXP);
+  UNPROTECT(5);
+  //Rprintf("type %s \n", type2char(TYPEOF(expr)));
+  return makeClosureForTilde(expr, rho);
   
-  // Rprintf("type %s \n", type2char(TYPEOF(expr)));
-  
-  SEXP alteredSyms;
-  PROTECT(alteredSyms = getAlteredSyms(expr));
-  R_xlen_t len = length(alteredSyms);
-    
-  if (len == 1 && CAR(alteredSyms) == install("..")) {
-    //Rprintf(".. is called\n");
-    SEXP arg_dot;
-    PROTECT(arg_dot = allocList(1));
-    SET_TAG(arg_dot, CAR(alteredSyms));
-    SETCAR(arg_dot, R_MissingArg);
-    UNPROTECT(7);
-    
-    return makeClosure(arg_dot, CAR(expr), rho);
-  }
-  
-  SEXP ansFormals, substiList, dots5List;
-  PROTECT(ansFormals = allocList(len));
-  PROTECT(substiList = allocList(len));
-  PROTECT(dots5List = list5(install("..1"), install("..2"), install("..3"), install("..4"), install("..5")));
-  
+}
+
+
+SEXP allocFormalsList1(SEXP sym1)
+{
+  SEXP res = allocList(1);
+  SET_TAG(res, sym1);
+  SETCAR(res, R_MissingArg);
+  return res;
+}
+
+SEXP mkNewSym(char const *prefix, int n)
+{
+  char newStr[10];
+  sprintf(newStr, "%s%d", prefix, n);
+  return install(newStr);
+}
+
+SEXP mkNewFormals(int n)
+{
+  SEXP res;
+  PROTECT(res = allocList(n));
   int i = 0;
-  for (SEXP p_ansFormals = ansFormals, p_substiList = substiList ; i < len;
-       p_ansFormals = CDR(p_ansFormals), p_substiList = CDR(p_substiList),
-       alteredSyms = CDR(alteredSyms), dots5List = CDR(dots5List), i++) {
-    
-    SET_TAG(p_ansFormals, CAR(alteredSyms));
-    SETCAR(p_ansFormals, R_MissingArg);
-    
-    SET_TAG(p_substiList, CAR(dots5List));
-    SETCAR(p_substiList, CAR(alteredSyms));
+  for (SEXP p_res = res; i < n; p_res = CDR(p_res), i++){
+    SET_TAG(p_res, mkNewSym(NEW_SYM_PREFIX, i + 1));
+    SETCAR(p_res, R_MissingArg);
+  }
+  UNPROTECT(1);
+  return res;
+}
+
+SEXP makeClosureForTilde(SEXP expr, SEXP rho)
+{
+
+  int ddBit = 0;
+  SEXP newBody = getNewDdBody(expr, &ddBit);
+  SEXP newFormals;
+  //Rprintf("ddBit is %d\n", ddBit);
+  
+  switch(ddBit) {
+  case TWO_DOTS_ID: newFormals = allocFormalsList1(install("..")); break;
+  case  0: newFormals = R_NilValue; break;
+  case  1: newFormals = mkNewFormals(1); break;
+  case  3: newFormals = mkNewFormals(2); break;
+  case  7: newFormals = mkNewFormals(3); break;
+  case 15: newFormals = mkNewFormals(4); break;
+  case 31: newFormals = mkNewFormals(5); break;
+  default: 
+    error(
+    "\nTail-prefix number of placeholders must be in order and"
+    "\nthe number of arguments is limitted to five"
+    "\n"
+    );
   }
   
-  //SEXP env2 = NewEnvironment(R_NilValue, duplicate(substiList), R_BaseEnv);
-  SEXP env2;
-  PROTECT(env2 = allocSExp(ENVSXP));
-  SET_FRAME(env2, substiList);
-  SET_ENCLOS(env2, R_EmptyEnv);
-  
-  SEXP ansBody;
-  ansBody = CAR(substitute(expr, env2)); // need CAR to strip top level LANGSXP
-  
-  UNPROTECT(10);
-  
-  return makeClosure(ansFormals, ansBody, rho);
+  return makeClosure(newFormals, CAR(newBody), rho);
 }
 
 SEXP makeClosure(SEXP formals, SEXP body, SEXP env)
@@ -161,19 +190,6 @@ SEXP makeClosure(SEXP formals, SEXP body, SEXP env)
   return cl;
 }
 
-void ensureNonDuplicateNames(SEXP plist)
-{
-  SEXP names = getAttrib(plist, R_NamesSymbol);
-
-  if (any_duplicated(names, 0))
-    error("arguments must have unique name");
-}
-
-void ensureNotNamed(SEXP bd) {
-  if (TAG(bd) != R_NilValue)
-    error("the last element should not be named");
-}
-
 int getddId(SEXP symbol)
 {
   // https://github.com/wch/r-source/blob/e959f15cf3c37be9829c9a97d6bd4dd86b2495fc/src/main/envir.c#L1320-L1336
@@ -182,7 +198,7 @@ int getddId(SEXP symbol)
   
   if( !strncmp(buf, "..", 2) ) {
     if (strlen(buf) == 2) {
-      return TWO_DOTS_ID; // used getAlteredSyms 
+      return TWO_DOTS_ID; // used getNewDdBod
     } else {
       buf += 2;
       return (int)strtol(buf, &endp, 10);
@@ -192,50 +208,52 @@ int getddId(SEXP symbol)
   return 0;
 }
 
-void setDdBit(SEXP expr, int *ddBit)
+SEXP getNewDdBody(SEXP expr, int *ddBit)
 {
+  
   int ddId = 0;
+  SEXP h, p = R_NilValue, res = R_NilValue;
   
   switch(TYPEOF(expr)) {
   case SYMSXP:
     ddId = getddId(expr);
     if (ddId == TWO_DOTS_ID) {
       *ddBit |= ddId;
+      //return install("..");
+      return expr;
     } else if (ddId > 0) {
       *ddBit |= 1 << (ddId - 1);
-    }  
-    break;
+      return mkNewSym(NEW_SYM_PREFIX, ddId);
+    } else {
+      return expr;
+    }
   case LANGSXP:
   case LISTSXP:
     while(expr != R_NilValue) {
-      setDdBit(CAR(expr), ddBit);
+      h = getNewDdBody(CAR(expr), ddBit);
+      if (isLanguage(expr)) {
+        h = LCONS(h, R_NilValue);
+      } else {
+        h = CONS(h, R_NilValue);
+      }
+      SET_TAG(h, TAG(expr));
+        
+      if (h != R_NilValue) {
+        if (res == R_NilValue) {
+          PROTECT(res = h);
+        } else {
+          SETCDR(p, h);
+        }
+        while (CDR(h) != R_NilValue) h = CDR(h);
+        p = h;
+      }
       expr = CDR(expr);
     }
-    break;
+    if (res != R_NilValue) {
+      UNPROTECT(1);
+    }
+    return res;
   default:
-    break;
-  }
-}
-
-SEXP getAlteredSyms(SEXP e)
-{
-  int ddBit = 0;
-  setDdBit(e, &ddBit);
-  
-  //Rprintf("ddBit is %d\n", ddBit);
-  switch(ddBit) {
-  case TWO_DOTS_ID: return list1(install(".."));
-  case  0: return R_NilValue;
-  case  1: return list1(install("._1"));
-  case  3: return list2(install("._1"), install("._2"));
-  case  7: return list3(install("._1"), install("._2"), install("._3"));
-  case 15: return list4(install("._1"), install("._2"), install("._3"), install("._4"));
-  case 31: return list5(install("._1"), install("._2"), install("._3"), install("._4"), install("._5"));
-  default: 
-    error(
-    "\nTail-prefix number of placeholders must be in order and"
-    "\nthe number of arguments is limitted to five"
-    "\n"
-    );
+    return expr;
   }
 }
