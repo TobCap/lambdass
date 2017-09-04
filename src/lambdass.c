@@ -229,6 +229,9 @@ SEXP getNewDdBody(SEXP expr, int *ddBit)
     }
   case LANGSXP:
   case LISTSXP:
+    if (CAR(expr) == install("~")) {
+        return expr;
+    }
     while(expr != R_NilValue) {
       h = getNewDdBody(CAR(expr), ddBit);
       if (isLanguage(expr)) {
