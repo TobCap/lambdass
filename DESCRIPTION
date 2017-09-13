@@ -8,6 +8,6 @@ Authors@R: person("tob", "", email = "tobakucapitalism@gmail.com",
 Description: Syntax-sugar for lambda. It is very simple and you can save typing.
 License: MIT + file LICENSE
 Imports: methods, stats
-Suggests: testthat, knitr, rmarkdown
+Suggests: testthat, knitr, rmarkdown, magrittr, purrr, rlang
 VignetteBuilder: knitr
 RoxygenNote: 6.0.1

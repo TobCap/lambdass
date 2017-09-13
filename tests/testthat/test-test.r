@@ -6,6 +6,7 @@ test_that("test", {
   expect_error(f.(x = 1, y = x+1)) # body should not be named
   expect_identical(function(..) .., ~~ ..)
   expect_identical(function(._1, ._2) ._1 + ._2, ~~ ..1 + ..2)
+  expect_identical(function(._1, ._2) ._2 / ._1, ~~ ..2 / ..1)
   expect_error(~~ ..1 + ..3)
   expect_error(~~ ..2 + ..3)
   expect_error(~~ .. + ..1)
