@@ -15,6 +15,8 @@
 #' @param e1,e2 The original-tilde is both unary and binary function. 
 #' if \code{e2} is missing and the first call object of \code{e1} is \code{~} 
 #' symbol itself, then an anonymous function is made.
+#' @param ... any valid expression
+#' 
 #' @name double-tilde
 #' @useDynLib lambdass C_double_tilde
 #' @examples
@@ -29,6 +31,12 @@
 #' lm(speed ~ dist, data = cars)
 #' lm(mpg ~ ., data = mtcars)
 NULL
+
+#' @rdname double-tilde
+#' @export
+`~~` <- function(...) {
+  stop("Can not directly call `~~`. Use like `~~ .. + 1`.")
+}
 
 #' 
 #' @importFrom methods substituteDirect
