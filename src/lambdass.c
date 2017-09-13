@@ -15,7 +15,8 @@ SEXP C_f(SEXP env, SEXP rho)
 {
   SEXP dots = findVarInFrame(env, R_DotsSymbol);
   /*
-  Rprintf("type %s \n", type2char(TYPEOF(dots)));
+  Rf_PrintValue(dots);
+  Rprintf("type %s \n", type2char(TYPEOF(dots))); 
   Rprintf("TAG %s \n", TAG(dots) == R_NilValue ? "Nil" : CHAR(PRINTNAME((TAG(dots)))));
   Rprintf("length %d \n", length(dots));
   Rprintf("missing? %d \n", dots == R_MissingArg);
@@ -40,19 +41,25 @@ SEXP C_f(SEXP env, SEXP rho)
   while (--len) {
     SEXP expr = PREXPR(CAR(dots));
     if (TAG(dots) == R_NilValue) {
-      if (TYPEOF(expr) != SYMSXP)
+      // f.(x, body)
+      if (TYPEOF(expr) != SYMSXP) {
+        // f.("x", body)
         error("argument must be a symbol or `Name=Value` style");
-      
+      }
+      if (expr == R_MissingArg) {
+        // f.( , body)
+        error("An empty argument is not allowed");
+      }
       SETCAR(p_formal, R_MissingArg);
       SET_TAG(p_formal, expr);
       
     } else {
-      if (expr == R_MissingArg)
+      // f.(x = value, body)
+      if (expr == R_MissingArg) {
         error("argument must be a symbol or `Name=Value` style");
-      
+      }
       SETCAR(p_formal, expr);
       SET_TAG(p_formal, TAG(dots));
-      
     }
     p_formal = CDR(p_formal);
     dots = CDR(dots);
@@ -121,9 +128,10 @@ SEXP C_double_tilde(SEXP env, SEXP rho)
 
 SEXP allocFormalsList1(SEXP sym1)
 {
-  SEXP res = allocList(1);
+  SEXP res = PROTECT(allocList(1));
   SET_TAG(res, sym1);
   SETCAR(res, R_MissingArg);
+  UNPROTECT(1);
   return res;
 }
 
