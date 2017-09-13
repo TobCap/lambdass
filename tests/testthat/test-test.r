@@ -15,7 +15,7 @@ test_that("test", {
   expect_error(~~ .. + ..1)
   expect_error(~~ .. + ..2)
   
-  expect_equal(function(x) x, x %->% x)
+  expect_error(x %->% x)
   expect_equal(function(x) {x}, x %->% {x},
                label = FALSE, expected.label = FALSE)
   expect_equal(function(x, y) {x + y}, {x; y} %->% {x + y},

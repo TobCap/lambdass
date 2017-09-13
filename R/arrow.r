@@ -21,7 +21,13 @@ NULL
 #' @export
 `%->%` <- function(lhs, rhs) {
   env_ = parent.frame()
-
+  
+  # rhs always requires `{}`
+  rhs_expr = substitute(rhs)
+  if (class(rhs_expr) != "{") {
+    stop("rhs always requires `{}` like `x %->% {x}`")
+  }
+  
   # as.formals <- function(xs) as.pairlist(tools:::as.alist.call(xs))
   lhs_expr <- substitute(lhs)
   if (length(lhs_expr) > 1) {
@@ -38,7 +44,7 @@ NULL
   if (is.null(args_) ||
       (all(!nzchar(names(args_))) &&
        all(vapply(args_, function(x) length(x) == 1, FALSE))))
-    return(eval(call("function", as.formals(args_), substitute(rhs)), env_))
+    return(eval(call("function", as.formals(args_), rhs_expr), env_))
 
   mod_args <- mapply(
     function(arg_sym, arg_name) {
@@ -101,8 +107,8 @@ NULL
           quote(stop("some actual arguments are not appropriate type")))
 
   body_ <-
-    if (all(as.character(expr_add[1:2]) == c("if", "!(TRUE)"))) substitute(rhs)
-    else as.call(append(as.list(substitute(rhs)), expr_add, 1))
+    if (all(as.character(expr_add[1:2]) == c("if", "!(TRUE)"))) rhs_expr
+    else as.call(append(as.list(rhs_expr), expr_add, 1))
 
   eval(call("function", as.pairlist(arglist), body_), env_)
 }
