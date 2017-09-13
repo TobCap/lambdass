@@ -2,6 +2,7 @@
 
 export("%->%")
 export("~")
+export("~~")
 export(as.formals)
 export(f.)
 export(f.r)

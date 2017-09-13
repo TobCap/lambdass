@@ -2,12 +2,17 @@
 % Please edit documentation in R/double-tilde.r
 \name{double-tilde}
 \alias{double-tilde}
+\alias{~~}
 \alias{~}
 \title{syntax sugar of making an anonymous function}
 \usage{
+"~~"(...)
+
 "~"(e1, e2)
 }
 \arguments{
+\item{...}{any valid expression}
+
 \item{e1, e2}{The original-tilde is both unary and binary function. 
 if \code{e2} is missing and the first call object of \code{e1} is \code{~} 
 symbol itself, then an anonymous function is made.}
