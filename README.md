@@ -5,7 +5,7 @@ lambda syntax-sugar (lambdass)
 What is this package?
 ---------------------
 
-The purpose of this package is to provide you with easy syntax for making an anonymous function.
+The purpose of this package is to provide you with an easy syntax for making an anonymous function.
 
 Related packages and functions
 ------------------------------
@@ -18,7 +18,7 @@ Related packages and functions
 Similar notation
 ----------------
 
-Family of `purrr::map` such as `map_if()` or `map_dbl()` can accept formula notation with `..1` or `.x` which is converted to a closure by `rlang::as_closure()`. See comparison of usage below.
+Family of `purrr::map` such as `map_if()` or `map_dbl()` can accept formula notation with `..1` or `.x` which is converted to a closure by `rlang::as_closure()`. See the comparison of usage below.
 
 ``` r
 microbenchmark::microbenchmark(
@@ -29,12 +29,12 @@ microbenchmark::microbenchmark(
   1 %>% map(~ .x + 1)      # purrr::map with rlang:::as_closure
 )
 #> Unit: microseconds
-#>                    expr     min       lq      mean   median       uq       max neval
-#>  1 %>% Map(~~.. + 1, .) 389.624 413.9200  515.4274 432.6435 547.4355  1203.644   100
-#>     1 %>% map(~~.. + 1) 555.014 579.7550  686.9734 601.3765 668.2450  1282.103   100
-#>    1 %>% map(~~..1 + 1) 560.364 578.6410  741.5386 595.5810 661.7810  5325.899   100
-#>     1 %>% map(~..1 + 1) 748.934 769.2175 1511.5446 814.9115 990.7775 58708.359   100
-#>      1 %>% map(~.x + 1) 749.825 773.0075  974.7198 803.0985 917.8900  4316.621   100
+#>                    expr     min       lq     mean   median       uq       max neval
+#>  1 %>% Map(~~.. + 1, .) 147.558 157.1430 203.0687 168.5110 257.2240   486.362   100
+#>     1 %>% map(~~.. + 1) 206.849 219.1085 298.4507 236.7175 363.0995  1407.817   100
+#>    1 %>% map(~~..1 + 1) 209.078 221.5605 279.1835 238.5010 361.3165   542.086   100
+#>     1 %>% map(~..1 + 1) 277.730 304.0320 617.2780 330.1110 503.0790 21250.987   100
+#>      1 %>% map(~.x + 1) 279.514 298.4595 381.8811 324.9850 483.0185   566.604   100
 ```
 
 Installation
@@ -62,13 +62,13 @@ function(x) x + 1
 
 ### Double-tilde
 
-Double-tilde with dotted symbol placeholder makes an anonymous function like the usage of `%` in Closure's lambda, `_` in scala's lambda, or `#` in Mathematica's Pure Function. See details in the documents below.
+Double-tilde with dotted symbol placeholder makes an anonymous function like the usage of `%` in Closure's lambda, `_` in Scala's lambda, or `#` in Mathematica's Pure Function. See details in the documents below.
 
 -   <http://en.wikibooks.org/wiki/Clojure_Programming/Examples/API_Examples/Function_Tools#.25>
 -   <http://www.scala-lang.org/files/archive/spec/2.11/06-expressions.html#placeholder-syntax-for-anonymous-functions>
 -   <http://reference.wolfram.com/language/howto/WorkWithPureFunctions.html>
 
-A bounded vairable can be specified by `..` which is synonym for `..1`. Arguments can be designated by `..1`, `..2`, up to `..5`.
+A bounded variable can be specified by `..` which is a synonym for `..1`. Arguments can be designated by `..1`, `..2`, up to `..5`.
 
 ``` r
 ~~ .. + 1
@@ -87,11 +87,11 @@ The placeholder must be in order.
 #> the number of arguments is limitted to five
 ```
 
-Double-tilde cannot create curried-function such as `function(x) function(y) x + y`. The "De Bruijn index" is suitable for a notation of lambda culculas, but double-tilda is degined to cooporate with normal use of R's functions, not curried-function. See <https://en.wikipedia.org/wiki/De_Bruijn_index> for "De Bruijn index".
+Double-tilde cannot create curried-function such as `function(x) function(y) x + y`. The "De Bruijn index" is suitable for a notation of lambda calculas, but double-tilde is designed to cooperate with normal use of R's functions, not curried-function. See <https://en.wikipedia.org/wiki/De_Bruijn_index> for "De Bruijn index".
 
 ### f.
 
-A function name `f()` is used in many situation, so I avoid using it and `f.()` is adopted.
+A function name `f()` is used in many situations, so I avoid using it and `f.()` is adopted.
 
 ``` r
 # f.(...arguments, body)
@@ -116,14 +116,14 @@ microbenchmark::microbenchmark(
   f.r(x, y, x + y)
 )
 #> Unit: microseconds
-#>              expr    min       lq      mean  median       uq     max neval
-#>   f.(x, y, x + y)  5.796  10.9225  16.38816  12.929  18.0555 241.621   100
-#>  f.r(x, y, x + y) 92.280 150.4565 177.52479 193.698 198.6020 651.751   100
+#>              expr    min     lq      mean median      uq      max neval
+#>   f.(x, y, x + y)  1.784  4.459  11.31057  6.241  6.9105  156.029   100
+#>  f.r(x, y, x + y) 39.676 66.201 113.22799 68.876 84.0330 1084.617   100
 ```
 
 ### Arrow-notation
 
-right-hand side always needs `{` because R cannot control strength of associativity for `%infix-function%`.
+right-hand side always needs `{` because R cannot control the strength of associativity for `%infix-function%`.
 
 ``` r
 x %->% {x + 1}
@@ -228,14 +228,14 @@ microbenchmark::microbenchmark(
   identity
 )
 #> Warning in microbenchmark::microbenchmark(~~.., ~~..1, as_closure(~.x), : Could not measure a positive
-#> execution time for 6 evaluations.
+#> execution time for 29 evaluations.
 #> Unit: nanoseconds
-#>              expr    min     lq      mean   median     uq    max neval
-#>              ~~..   5796   7579  11346.22   9139.5  13375  62412   100
-#>             ~~..1   8025  12037  18701.76  17387.0  19170  45917   100
-#>   as_closure(~.x) 222898 228247 275822.29 232482.5 247862 826057   100
-#>  as_closure(~..1) 225126 229585 274658.73 234934.0 248754 784152   100
-#>          identity      0      1    299.40      1.0    447   5350   100
+#>              expr   min       lq      mean   median       uq    max neval
+#>              ~~..  1784   4459.0   6589.57   5796.0   8471.0  30315   100
+#>             ~~..1  2675   6242.0   9455.96   7579.5  11145.0 110112   100
+#>   as_closure(~.x) 84256 144660.5 147897.28 151348.0 157588.5 205066   100
+#>  as_closure(~..1) 82027 115238.5 141928.11 150679.0 156920.0 279068   100
+#>          identity     0      0.0    183.36      1.0      1.0   7134   100
 ```
 
 Apply closure
@@ -249,17 +249,17 @@ microbenchmark::microbenchmark(
   identity(1)
 )
 #> Unit: nanoseconds
-#>                 expr    min       lq      mean   median       uq    max neval
-#>            (~~..)(1)   7580  10254.0  18706.28  16050.0  24965.5  44580   100
-#>           (~~..1)(1)   9808  17164.0  22223.62  19170.0  26526.0  54387   100
-#>   as_closure(~.x)(1) 231367 237609.0 332268.69 249868.5 433089.5 902733   100
-#>  as_closure(~..1)(1) 232259 237385.5 332219.62 245633.0 439999.0 631691   100
-#>          identity(1)    892   1784.0   2408.02   1784.0   3122.0   5350   100
+#>                 expr   min      lq      mean  median       uq    max neval
+#>            (~~..)(1)  2229  3344.5   5805.03  5350.0   6687.5  29424   100
+#>           (~~..1)(1)  3121  4013.0   6718.93  6242.0   8025.5  14266   100
+#>   as_closure(~.x)(1) 84701 87376.5 109108.82 91834.0 153799.5 167619   100
+#>  as_closure(~..1)(1) 83810 87599.0 107530.68 89382.5 135745.0 197933   100
+#>          identity(1)     0   446.0    593.67   447.0    892.0   8025   100
 ```
 
 Church Encoding
 ---------------
 
-By using f.(), R notation is almost as-is with the article written in wikipedia.
+By using f.(), R notation is almost as-is with the article written in Wikipedia.
 
 <https://github.com/TobCap/lambdass/blob/master/vignettes/ChurchEncoding.md>

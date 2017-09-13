@@ -22,7 +22,7 @@ library(rlang)
 # lambda syntax-sugar (lambdass)
 
 ## What is this package?
-The purpose of this package is to provide you with easy syntax for making an anonymous
+The purpose of this package is to provide you with an easy syntax for making an anonymous
 function. 
 
 ## Related packages and functions
@@ -34,7 +34,7 @@ function.
 ## Similar notation
 Family of `purrr::map` such as `map_if()` or `map_dbl()` can accept formula 
 notation with `..1` or `.x` which is converted to a closure by `rlang::as_closure()`.
-See comparison of usage below.
+See the comparison of usage below.
 
 ```{r}
 microbenchmark::microbenchmark(
@@ -66,14 +66,14 @@ function(x) x + 1
 
 ### Double-tilde
 Double-tilde with dotted symbol placeholder makes an anonymous function
-like the usage of `%` in Closure's lambda, `_` in scala's lambda, or `#`
+like the usage of `%` in Closure's lambda, `_` in Scala's lambda, or `#`
 in Mathematica's Pure Function. See details in the documents below.
 
 - http://en.wikibooks.org/wiki/Clojure_Programming/Examples/API_Examples/Function_Tools#.25
 - http://www.scala-lang.org/files/archive/spec/2.11/06-expressions.html#placeholder-syntax-for-anonymous-functions
 - http://reference.wolfram.com/language/howto/WorkWithPureFunctions.html  
 
-A bounded vairable can be specified by `..` which is synonym for `..1`.
+A bounded variable can be specified by `..` which is a synonym for `..1`.
 Arguments can be designated by `..1`, `..2`, up to `..5`.
 
 ```{r eval=FALSE}
@@ -90,14 +90,14 @@ The placeholder must be in order.
 ```
 
 Double-tilde cannot create curried-function such as `function(x) function(y) x + y`.
-The "De Bruijn index" is suitable for a notation of lambda culculas, 
-but double-tilda is degined to cooporate with normal use of R's functions,
+The "De Bruijn index" is suitable for a notation of lambda calculas, 
+but double-tilde is designed to cooperate with normal use of R's functions,
 not curried-function.
 See https://en.wikipedia.org/wiki/De_Bruijn_index for "De Bruijn index".
 
 
 ### f.
-A function name `f()` is used in many situation, so I avoid using it and `f.()` 
+A function name `f()` is used in many situations, so I avoid using it and `f.()` 
 is adopted.
 
 ```{r eval=FALSE}
@@ -124,7 +124,7 @@ microbenchmark::microbenchmark(
 ```
 
 ### Arrow-notation
-right-hand side always needs `{` because R cannot control
+right-hand side always needs `{` because R cannot control the
 strength of associativity for `%infix-function%`.
 
 ```{r eval=FALSE}
@@ -216,6 +216,6 @@ microbenchmark::microbenchmark(
 
 
 ## Church Encoding
-By using f.(), R notation is almost as-is with the article written in wikipedia.
+By using f.(), R notation is almost as-is with the article written in Wikipedia.
 
 https://github.com/TobCap/lambdass/blob/master/vignettes/ChurchEncoding.md
