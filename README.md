@@ -18,23 +18,33 @@ Related packages and functions
 Similar notation
 ----------------
 
-Family of `purrr::map` such as `map_if()` or `map_dbl()` can accept formula notation with `..1` or `.x` which is converted to a closure by `rlang::as_closure()`. See the comparison of usage below.
+Family of tidyverse functions such as `dplyr::mutate_if` and `purrr::map` whose formal arguments include `.predicate`, `.f`, and/or `.funs` for a closure object can accept formula notation with `..1` or `.x` which is converted to a closure by `rlang::as_closure()`. See the comparison of usage below.
 
 ``` r
+if ("package:lambdass" %in% search()) detach("package:lambdass")
+library(purrr)
+microbenchmark::microbenchmark(
+  1 %>% map(~ ..1 + 1),    # purrr::map with rlang:::as_closure
+  1 %>% map(~ .x + 1),     # purrr::map with rlang:::as_closure
+  times = 1e3
+)
+#> Unit: microseconds
+#>                 expr     min       lq     mean   median       uq       max neval
+#>  1 %>% map(~..1 + 1) 721.294 739.7955 877.2752 751.8315 794.6280 51680.843  1000
+#>   1 %>% map(~.x + 1) 723.523 740.9090 834.7126 751.3855 795.5195  6694.482  1000
+
+suppressPackageStartupMessages(library("lambdass"))
 microbenchmark::microbenchmark(
   1 %>% Map(~~ .. + 1, .), # base::Map with lamdass's double-tilde
   1 %>% map(~~ .. + 1),    # purrr::map with lambdass's double-tilde
   1 %>% map(~~ ..1 + 1),   # purrr::map with lambdass's double-tilde
-  1 %>% map(~ ..1 + 1),    # purrr::map with rlang:::as_closure
-  1 %>% map(~ .x + 1)      # purrr::map with rlang:::as_closure
+  times = 1e3
 )
 #> Unit: microseconds
-#>                    expr     min       lq     mean   median       uq       max neval
-#>  1 %>% Map(~~.. + 1, .) 147.558 157.1430 203.0687 168.5110 257.2240   486.362   100
-#>     1 %>% map(~~.. + 1) 206.849 219.1085 298.4507 236.7175 363.0995  1407.817   100
-#>    1 %>% map(~~..1 + 1) 209.078 221.5605 279.1835 238.5010 361.3165   542.086   100
-#>     1 %>% map(~..1 + 1) 277.730 304.0320 617.2780 330.1110 503.0790 21250.987   100
-#>      1 %>% map(~.x + 1) 279.514 298.4595 381.8811 324.9850 483.0185   566.604   100
+#>                    expr     min       lq     mean  median       uq      max neval
+#>  1 %>% Map(~~.. + 1, .) 305.815 320.5260 365.0700 326.768 378.4795 3759.377  1000
+#>     1 %>% map(~~.. + 1) 434.204 450.6980 522.5550 458.722 548.3270 6059.672  1000
+#>    1 %>% map(~~..1 + 1) 446.240 457.6075 526.1281 464.518 555.6820 3918.080  1000
 ```
 
 Installation
@@ -116,9 +126,9 @@ microbenchmark::microbenchmark(
   f.r(x, y, x + y)
 )
 #> Unit: microseconds
-#>              expr    min     lq      mean median      uq      max neval
-#>   f.(x, y, x + y)  1.784  4.459  11.31057  6.241  6.9105  156.029   100
-#>  f.r(x, y, x + y) 39.676 66.201 113.22799 68.876 84.0330 1084.617   100
+#>              expr    min      lq      mean   median      uq     max neval
+#>   f.(x, y, x + y)  4.458  7.5790  11.15902  11.1455  15.604  24.965   100
+#>  f.r(x, y, x + y) 75.340 89.3825 138.00521 152.9080 161.601 391.854   100
 ```
 
 ### Arrow-notation
@@ -228,14 +238,14 @@ microbenchmark::microbenchmark(
   identity
 )
 #> Warning in microbenchmark::microbenchmark(~~.., ~~..1, as_closure(~.x), : Could not measure a positive
-#> execution time for 29 evaluations.
+#> execution time for 6 evaluations.
 #> Unit: nanoseconds
-#>              expr   min       lq      mean   median       uq    max neval
-#>              ~~..  1784   4459.0   6589.57   5796.0   8471.0  30315   100
-#>             ~~..1  2675   6242.0   9455.96   7579.5  11145.0 110112   100
-#>   as_closure(~.x) 84256 144660.5 147897.28 151348.0 157588.5 205066   100
-#>  as_closure(~..1) 82027 115238.5 141928.11 150679.0 156920.0 279068   100
-#>          identity     0      0.0    183.36      1.0      1.0   7134   100
+#>              expr    min       lq      mean   median       uq    max neval
+#>              ~~..   6242  12483.0  17444.76  15158.0  25634.0  37002   100
+#>             ~~..1   8025  17386.0  22709.53  19615.5  28755.0  49038   100
+#>   as_closure(~.x) 228693 240506.5 361820.16 410131.0 436432.0 590231   100
+#>  as_closure(~..1) 226909 236495.0 353113.87 404558.5 421944.5 738235   100
+#>          identity      0      1.0    433.19    446.0    447.0  10254   100
 ```
 
 Apply closure
@@ -249,12 +259,12 @@ microbenchmark::microbenchmark(
   identity(1)
 )
 #> Unit: nanoseconds
-#>                 expr   min      lq      mean  median       uq    max neval
-#>            (~~..)(1)  2229  3344.5   5805.03  5350.0   6687.5  29424   100
-#>           (~~..1)(1)  3121  4013.0   6718.93  6242.0   8025.5  14266   100
-#>   as_closure(~.x)(1) 84701 87376.5 109108.82 91834.0 153799.5 167619   100
-#>  as_closure(~..1)(1) 83810 87599.0 107530.68 89382.5 135745.0 197933   100
-#>          identity(1)     0   446.0    593.67   447.0    892.0   8025   100
+#>                 expr    min     lq      mean   median       uq    max neval
+#>            (~~..)(1)   7134   8471  12893.10  14712.0  15603.5  33882   100
+#>           (~~..1)(1)   9362  10700  16793.83  16272.0  18724.0 101196   100
+#>   as_closure(~.x)(1) 230922 236717 268127.74 239392.0 243404.0 472542   100
+#>  as_closure(~..1)(1) 230922 235380 263032.29 239614.5 243850.0 573292   100
+#>          identity(1)    892   1338   1948.94   1784.0   2230.0   7580   100
 ```
 
 Church Encoding

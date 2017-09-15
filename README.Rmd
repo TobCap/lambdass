@@ -12,10 +12,11 @@ options(width = 108)
 ```
 
 ```{r include=FALSE}
+library(dplyr)
 library(magrittr)
 library(purrr)
-library(lambdass)
 library(rlang)
+library(lambdass)
 ```
 
 
@@ -32,17 +33,27 @@ function.
 * `lambdaR::lambda()`  https://github.com/hoxo-m/lambdaR    
 
 ## Similar notation
-Family of `purrr::map` such as `map_if()` or `map_dbl()` can accept formula 
+Family of tidyverse functions such as `dplyr::mutate_if` and `purrr::map` 
+whose formal arguments include `.predicate`, `.f`, and/or `.funs`
+for a closure object can accept formula 
 notation with `..1` or `.x` which is converted to a closure by `rlang::as_closure()`.
 See the comparison of usage below.
 
 ```{r}
+if ("package:lambdass" %in% search()) detach("package:lambdass")
+library(purrr)
+microbenchmark::microbenchmark(
+  1 %>% map(~ ..1 + 1),    # purrr::map with rlang:::as_closure
+  1 %>% map(~ .x + 1),     # purrr::map with rlang:::as_closure
+  times = 1e3
+)
+
+suppressPackageStartupMessages(library("lambdass"))
 microbenchmark::microbenchmark(
   1 %>% Map(~~ .. + 1, .), # base::Map with lamdass's double-tilde
   1 %>% map(~~ .. + 1),    # purrr::map with lambdass's double-tilde
   1 %>% map(~~ ..1 + 1),   # purrr::map with lambdass's double-tilde
-  1 %>% map(~ ..1 + 1),    # purrr::map with rlang:::as_closure
-  1 %>% map(~ .x + 1)      # purrr::map with rlang:::as_closure
+  times = 1e3
 )
 ```
 
